@@ -1,4 +1,4 @@
-import "test-dbn/web";
+import "@databrainhq/plugin/web";
 import "./App.css";
 
 declare global {
