@@ -4,6 +4,10 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 
+(window as any).databrainServerEvent = (error: any) => {
+  console.log(error);
+};
+
 @NgModule({
   declarations: [
     AppComponent
