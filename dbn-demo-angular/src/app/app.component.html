@@ -8,3 +8,23 @@
   handle-server-event="databrainServerEvent"
 >
 </dbn-dashboard>
+
+<!-- if you want to disable the actions provided by 
+embed and add your own buttons to perform those actions
+you can add like how we did for create metric below
+
+<div>
+  <dbn-dashboard
+    [token]="token"
+    [dashboardId]="dashboardId"
+    enable-email-csv="true"
+    options-icon="download"
+    enable-download-csv="true"
+    disable-fullscreen="true"
+    handle-server-event="databrainServerEvent"
+    [options]="dashboardOptions"
+  >
+  </dbn-dashboard>
+
+  <button (click)="createMetric()">Create Metric</button>
+</div> -->
