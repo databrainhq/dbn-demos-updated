@@ -1,5 +1,3 @@
-import "@databrainhq/plugin/web";
-
 function initDashboard() {
   const url = new URL(location.href);
   const token = url.searchParams.get("token") || "";
