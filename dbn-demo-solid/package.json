@@ -15,7 +15,7 @@
     "vite-plugin-solid": "^2.5.0"
   },
   "dependencies": {
-    "@databrainhq/plugin": "^0.11.7",
+    "@databrainhq/plugin": "^0.15.60",
     "solid-js": "^1.6.10"
   }
 }
