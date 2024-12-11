@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@databrainhq/plugin": "^0.11.7",
+    "@databrainhq/plugin": "^0.15.60",
     "vue": "^3.2.47"
   },
   "devDependencies": {
