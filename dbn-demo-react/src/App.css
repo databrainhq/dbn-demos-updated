@@ -1,0 +1,909 @@
+/* CommerceHub - Enterprise Ecommerce Management Platform */
+
+:root {
+  /* Enterprise Color Palette */
+  --enterprise-navy: #0f172a;
+  --enterprise-slate: #1e293b;
+  --enterprise-blue: #1d4ed8;
+  --enterprise-blue-light: #3b82f6;
+  --enterprise-blue-dark: #1e40af;
+  --enterprise-gray: #374151;
+  --enterprise-gray-light: #6b7280;
+  --enterprise-gray-lighter: #9ca3af;
+  --enterprise-accent: #059669;
+  --enterprise-accent-light: #10b981;
+
+  /* Legacy colors for compatibility */
+  --primary-blue: var(--enterprise-navy);
+  --secondary-blue: var(--enterprise-slate);
+  --accent-blue: var(--enterprise-blue);
+  --light-blue: #eff6ff;
+  --success-green: #059669;
+  --warning-orange: #d97706;
+  --danger-red: #dc2626;
+
+  /* Neutrals */
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+  --white: #ffffff;
+
+  /* Enterprise Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  --shadow-nav: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  background-color: var(--gray-50);
+  color: var(--gray-800);
+  line-height: 1.6;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Main App Layout */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Enterprise Sidebar */
+.sidebar {
+  width: 280px;
+  background: var(--enterprise-navy);
+  color: var(--white);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  z-index: 1000;
+  box-shadow: var(--shadow-nav);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-header {
+  padding: 2rem 1.75rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: -0.025em;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--enterprise-blue) 0%, var(--enterprise-blue-light) 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+  box-shadow: 0 4px 8px rgba(29, 78, 216, 0.25);
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 1.5rem 0;
+  overflow-y: auto;
+}
+
+.nav-section {
+  margin-bottom: 2.5rem;
+}
+
+.nav-section-title {
+  padding: 0 1.75rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.25rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.75rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  border-radius: 0 24px 24px 0;
+  margin-right: 1rem;
+  position: relative;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--white);
+  transform: translateX(2px);
+}
+
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%);
+  color: var(--white);
+  border-right: 3px solid var(--enterprise-blue-light);
+  transform: translateX(2px);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 24px;
+  background: var(--enterprise-blue-light);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  max-width: calc(100vw - 280px);
+}
+
+/* Header */
+.app-header {
+  background: var(--white);
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 0.25rem;
+}
+
+.header-subtitle {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-stats {
+  display: flex;
+  gap: 2rem;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  background: var(--gray-50);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.user-menu:hover {
+  background: var(--gray-100);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.user-role {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+/* Dashboard Content */
+.dashboard-content {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Adjust content when side panel is open */
+.dashboard-content.panel-open {
+  margin-right: 420px;
+}
+
+.dashboard-header {
+  margin-bottom: 2rem;
+}
+
+.dashboard-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-description {
+  color: var(--gray-600);
+  font-size: 1rem;
+}
+
+.analytics-container {
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.analytics-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--gray-200);
+  background: linear-gradient(90deg, var(--light-blue) 0%, var(--gray-50) 100%);
+}
+
+.analytics-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-blue);
+  margin-bottom: 0.25rem;
+}
+
+.analytics-subtitle {
+  color: var(--gray-600);
+  font-size: 0.875rem;
+}
+
+.analytics-content {
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+}
+
+/* DataBrain Dashboard Component */
+dbn-dashboard {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Ensure DataBrain internal components are properly contained */
+dbn-dashboard * {
+  box-sizing: border-box;
+}
+
+/* Fix for DataBrain modals and dropdowns */
+dbn-dashboard .modal,
+dbn-dashboard .dropdown,
+dbn-dashboard .popover,
+dbn-dashboard [role="dialog"],
+dbn-dashboard [role="menu"],
+dbn-dashboard .tooltip {
+  max-width: calc(100vw - 300px) !important;
+  max-height: calc(100vh - 100px) !important;
+  overflow: auto !important;
+  z-index: 9999 !important;
+}
+
+/* Metric Creation Side Panel */
+dbn-dashboard .metric-builder,
+dbn-dashboard .metric-editor,
+dbn-dashboard .chart-builder,
+dbn-dashboard [class*="metric"],
+dbn-dashboard [class*="builder"],
+dbn-dashboard [class*="modal"],
+dbn-dashboard [class*="editor"] {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  width: 420px !important;
+  height: 100vh !important;
+  max-width: 420px !important;
+  max-height: 100vh !important;
+  transform: none !important;
+  background: var(--white) !important;
+  border-left: 1px solid var(--gray-200) !important;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1) !important;
+  z-index: 10000 !important;
+  overflow-y: auto !important;
+  left: auto !important;
+}
+
+/* Side Panel Header Styling */
+dbn-dashboard .metric-builder .header,
+dbn-dashboard .metric-editor .header,
+dbn-dashboard [class*="builder"] .header,
+dbn-dashboard [class*="modal"] .header {
+  background: var(--enterprise-navy) !important;
+  color: var(--white) !important;
+  padding: 1.5rem !important;
+  border-bottom: 1px solid var(--gray-200) !important;
+  margin: 0 !important;
+}
+
+/* Side Panel Content Area */
+dbn-dashboard .metric-builder .content,
+dbn-dashboard .metric-editor .content,
+dbn-dashboard [class*="builder"] .content {
+  padding: 1.5rem !important;
+  background: var(--gray-50) !important;
+}
+
+/* Dropdown Styling for Rows/Columns */
+dbn-dashboard select,
+dbn-dashboard .select-wrapper,
+dbn-dashboard .dropdown {
+  width: 100% !important;
+  margin-bottom: 1rem !important;
+  border: 1px solid var(--gray-300) !important;
+  border-radius: 8px !important;
+  padding: 0.75rem !important;
+  background: var(--white) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.875rem !important;
+}
+
+/* Section Headers in Side Panel */
+dbn-dashboard .section-header,
+dbn-dashboard h3,
+dbn-dashboard .field-label {
+  color: var(--enterprise-gray) !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  margin-bottom: 0.5rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Ensure form elements don't overflow */
+dbn-dashboard input,
+dbn-dashboard select,
+dbn-dashboard textarea {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Force containment for any DataBrain content */
+dbn-dashboard * {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Specific override for metric creation container */
+dbn-dashboard [style*="width"],
+dbn-dashboard [style*="position"] {
+  max-width: calc(100vw - 300px) !important;
+  max-height: calc(100vh - 100px) !important;
+}
+
+/* Last resort - force all DataBrain children to respect boundaries */
+dbn-dashboard {
+  contain: layout style !important;
+  isolation: isolate !important;
+}
+
+/* Chart Type Selection in Side Panel */
+dbn-dashboard .chart-type-selector,
+dbn-dashboard .chart-options {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 0.75rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+dbn-dashboard .chart-type-option {
+  padding: 0.75rem !important;
+  border: 1px solid var(--gray-300) !important;
+  border-radius: 8px !important;
+  background: var(--white) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  text-align: center !important;
+}
+
+dbn-dashboard .chart-type-option:hover,
+dbn-dashboard .chart-type-option.selected {
+  border-color: var(--enterprise-blue) !important;
+  background: var(--light-blue) !important;
+}
+
+/* Filter and Sort Controls */
+dbn-dashboard .filter-controls,
+dbn-dashboard .sort-controls {
+  background: var(--white) !important;
+  border: 1px solid var(--gray-200) !important;
+  border-radius: 8px !important;
+  padding: 1rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* Buttons in Side Panel */
+dbn-dashboard button,
+dbn-dashboard .btn {
+  background: var(--enterprise-blue) !important;
+  color: var(--white) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 0.75rem 1.5rem !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease !important;
+  width: 100% !important;
+  margin-top: 1rem !important;
+}
+
+dbn-dashboard button:hover,
+dbn-dashboard .btn:hover {
+  background: var(--enterprise-blue-dark) !important;
+}
+
+/* Secondary buttons */
+dbn-dashboard button.secondary,
+dbn-dashboard .btn-secondary {
+  background: var(--gray-100) !important;
+  color: var(--gray-700) !important;
+}
+
+/* Side Panel Animation */
+dbn-dashboard .metric-builder,
+dbn-dashboard .metric-editor {
+  animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%) !important;
+    opacity: 0 !important;
+  }
+
+  to {
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Error States */
+.error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: var(--gray-50);
+}
+
+.error-card {
+  background: var(--white);
+  padding: 3rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-xl);
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+.error-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.5rem;
+  background: var(--danger-red);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 1.5rem;
+}
+
+.error-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 1rem;
+}
+
+.error-message {
+  color: var(--gray-600);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.config-section {
+  background: var(--gray-50);
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.config-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 1rem;
+}
+
+.config-section pre {
+  background: var(--gray-800);
+  color: var(--gray-100);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.retry-btn {
+  background: var(--accent-blue);
+  color: var(--white);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: var(--primary-blue);
+}
+
+/* Loading States */
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--gray-50);
+}
+
+.loading-card {
+  background: var(--white);
+  padding: 3rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1.5rem;
+  border: 4px solid var(--gray-200);
+  border-top: 4px solid var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 0.5rem;
+}
+
+.loading-message {
+  color: var(--gray-600);
+}
+
+/* Status Indicators */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-success {
+  background: rgba(56, 161, 105, 0.1);
+  color: var(--success-green);
+}
+
+.status-warning {
+  background: rgba(237, 137, 54, 0.1);
+  color: var(--warning-orange);
+}
+
+.status-error {
+  background: rgba(229, 62, 62, 0.1);
+  color: var(--danger-red);
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.action-btn {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--gray-300);
+  background: var(--white);
+  color: var(--gray-700);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-btn:hover {
+  border-color: var(--accent-blue);
+  background: var(--light-blue);
+  color: var(--primary-blue);
+}
+
+.action-btn.primary {
+  background: var(--accent-blue);
+  color: var(--white);
+  border-color: var(--accent-blue);
+}
+
+.action-btn.primary:hover {
+  background: var(--primary-blue);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+    height: 100vh;
+  }
+
+  .app-header {
+    padding: 1rem;
+  }
+
+  .header-stats {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 1rem;
+  }
+
+  .analytics-header {
+    padding: 1rem;
+  }
+
+  .error-card,
+  .loading-card {
+    padding: 2rem;
+    margin: 1rem;
+  }
+
+  .quick-actions {
+    flex-direction: column;
+  }
+}
+
+/* Side Panel Layout Structure */
+dbn-dashboard .side-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+dbn-dashboard .panel-header {
+  flex-shrink: 0 !important;
+  background: var(--enterprise-navy) !important;
+  color: var(--white) !important;
+  padding: 1.5rem !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+dbn-dashboard .panel-title {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+dbn-dashboard .panel-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 0 !important;
+  background: var(--gray-50) !important;
+}
+
+dbn-dashboard .panel-section {
+  padding: 1.5rem !important;
+  border-bottom: 1px solid var(--gray-200) !important;
+  background: var(--white) !important;
+  margin-bottom: 1px !important;
+}
+
+dbn-dashboard .panel-section:last-child {
+  border-bottom: none !important;
+  margin-bottom: 0 !important;
+}
+
+/* Row and Column Selectors */
+dbn-dashboard .dimension-selector,
+dbn-dashboard .measure-selector {
+  margin-bottom: 1.5rem !important;
+}
+
+dbn-dashboard .selector-label {
+  display: block !important;
+  color: var(--enterprise-gray) !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Enhanced Dropdown Styling */
+dbn-dashboard .dimension-dropdown,
+dbn-dashboard .measure-dropdown {
+  position: relative !important;
+}
+
+dbn-dashboard .dimension-dropdown select,
+dbn-dashboard .measure-dropdown select {
+  appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.75rem center !important;
+  background-size: 1rem !important;
+  padding-right: 2.5rem !important;
+}
+
+/* Close Button for Side Panel */
+dbn-dashboard .panel-close {
+  position: absolute !important;
+  top: 1rem !important;
+  right: 1rem !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: none !important;
+  color: var(--white) !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background 0.2s ease !important;
+}
+
+dbn-dashboard .panel-close:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
