@@ -1,9 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import './Reports.css';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, RefreshCw, BarChart3, TrendingUp } from "lucide-react";
 
 interface Metric {
   id: string;
-  metricId?: string; // Original metric ID from DataBrain API
+  metricId?: string;
   externalMetricId?: string;
   originalMetricId?: string;
   name: string;
@@ -28,484 +39,277 @@ const Reports: React.FC<ReportsProps> = ({ embedId, clientId }) => {
   const [sortField, setSortField] = useState<keyof Metric>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [selectedMetricId, setSelectedMetricId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'table' | 'widgets'>('table');
-  const [token, setToken] = useState<string>('');
 
-  useEffect(() => {
-    console.log('📊 Reports component mounted, creating guest token...');
-    console.log('🔧 Props:', { embedId, clientId });
-    initializeReports();
-  }, []);
-
-  const createGuestToken = async (): Promise<string> => {
-    console.log('🔑 Creating guest token for Reports...');
-
-    const response = await fetch('http://localhost:3001/api/guest-token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        clientId: clientId
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Failed to create guest token: ${errorData.error || 'Unknown error'}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ Guest token created successfully for Reports');
-    return data.guestToken;
-  };
-
-  const initializeReports = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Create guest token first
-      const guestToken = await createGuestToken();
-      setToken(guestToken);
-
-      // Then fetch metrics
-      await fetchMetrics();
-    } catch (err) {
-      console.error('❌ Error initializing Reports:', err);
-      setError(err instanceof Error ? err.message : 'Failed to initialize Reports');
+  const fetchMetrics = useCallback(async () => {
+    if (!embedId || !clientId) {
+      setError('Missing embedId or clientId');
       setLoading(false);
+      return;
     }
-  };
 
-  const fetchMetrics = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      console.log('🚀 Starting fetchMetrics with new dashboard-based approach...');
-      setLoading(true);
-      setError(null);
+      console.log('🔍 Fetching metrics for dashboard:', { embedId, clientId });
 
-      // Use the provided embed ID for the Data App Embedding API
-      if (!embedId) {
-        throw new Error('Embed ID is required for fetching metrics');
-      }
-      if (!clientId) {
-        throw new Error('Client ID is required for fetching metrics');
-      }
-
-      const response = await fetch('http://localhost:3001/api/metrics', {
+      const response = await fetch('http://localhost:3001/api/v2/dashboard-metrics', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           embedId: embedId,
-          clientId: clientId,
-          dashboardId: embedId, // Use embedId as dashboardId as fallback
-          isPagination: false,
-          pageNumber: 1
+          clientId: clientId
         })
       });
 
-      console.log('📥 Response status:', response.status, response.statusText);
-
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Metrics response data:', data);
-        console.log('📊 Number of metrics:', data.metrics?.length || 0);
+        console.log('✅ Metrics fetched successfully:', data);
 
-        // Log the first few raw metrics to understand the structure
-        if (data.metrics?.length > 0) {
-          console.log('🔍 Raw metric structure (first 3 metrics):', data.metrics.slice(0, 3).map((metric: any, index: number) => ({
-            index,
-            rawMetric: metric,
-            availableKeys: Object.keys(metric)
-          })));
+        if (data.metrics && Array.isArray(data.metrics)) {
+          setMetrics(data.metrics);
+        } else {
+          console.warn('⚠️ No metrics array in response:', data);
+          setMetrics([]);
         }
-
-        // Use the exact metric data from API without transformation
-        const transformedMetrics = data.metrics?.map((metric: any, index: number) => ({
-          id: metric.metricId || metric.id || `metric-${index}`, // Use metricId as primary ID
-          metricId: metric.metricId, // Original metricId for dbn-metric component
-          externalMetricId: metric.externalMetricId,
-          originalMetricId: metric.originalMetricId || metric.metricId,
-          name: metric.name || metric.title || `Metric ${index + 1}`,
-          description: metric.description || metric.summary || '',
-          value: metric.value || Math.floor(Math.random() * 10000),
-          unit: metric.unit || metric.format || '',
-          category: metric.category || metric.type || 'General',
-          lastUpdated: metric.lastUpdated || metric.updatedAt || new Date().toISOString(),
-          status: metric.status || 'Active'
-        })) || [];
-
-        // Log the metric IDs we're getting to debug
-        console.log('🔍 Metric IDs from API:', transformedMetrics.map((m: Metric) => ({
-          name: m.name,
-          id: m.id,
-          originalMetricId: m.originalMetricId,
-          externalMetricId: m.externalMetricId,
-          idLength: m.id?.length || 0,
-          idFormat: m.id?.includes('-') ? 'UUID' : 'SHORT'
-        })));
-
-        // Identify which metrics have short vs UUID format IDs
-        const shortIdMetrics = transformedMetrics.filter((m: Metric) => !(m.id?.includes('-')));
-        const uuidIdMetrics = transformedMetrics.filter((m: Metric) => m.id?.includes('-'));
-
-        console.log('📋 ID Format Analysis:', {
-          totalMetrics: transformedMetrics.length,
-          shortIdMetrics: shortIdMetrics.length,
-          uuidIdMetrics: uuidIdMetrics.length,
-          shortIdExamples: shortIdMetrics.slice(0, 3).map((m: Metric) => ({ name: m.name, id: m.id })),
-          uuidIdExamples: uuidIdMetrics.slice(0, 3).map((m: Metric) => ({ name: m.name, id: m.id }))
-        });
-
-        console.log('🔄 Setting metrics in state:', transformedMetrics);
-        setMetrics(transformedMetrics);
       } else {
         const errorData = await response.json();
-        setError(`Failed to fetch metrics: ${errorData.error || 'Unknown error'}`);
+        console.error('❌ Failed to fetch metrics:', errorData);
+        setError(errorData.error || 'Failed to fetch metrics');
       }
-    } catch (err) {
-      console.error('❌ Error fetching metrics:', err);
-      setError('Failed to connect to backend. Make sure the server is running on http://localhost:3001');
+    } catch (error) {
+      console.error('❌ Network error fetching metrics:', error);
+      setError('Failed to connect to server. Make sure the backend is running on http://localhost:3001');
     } finally {
       setLoading(false);
     }
+  }, [embedId, clientId]);
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
+
+  const handleRefresh = () => {
+    fetchMetrics();
   };
 
-  const handleSort = (field: keyof Metric) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
 
   const filteredAndSortedMetrics = metrics
     .filter(metric =>
       metric.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      metric.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      metric.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      (metric.description && metric.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (metric.category && metric.category.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
+      const aValue = a[sortField] || '';
+      const bValue = b[sortField] || '';
 
-      if (aValue === undefined || bValue === undefined) return 0;
-
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc'
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-      }
-
-      return 0;
-    });
-
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return 'N/A';
-
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  const handleMetricClick = async (metricId: string) => {
-    console.log('🎯 Opening metric with specific token:', metricId);
-
-    // Try to get a metric-specific token
-    try {
-      const response = await fetch('http://localhost:3001/api/metric-guest-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          clientId: clientId,
-          metricId: metricId,
-          embedId: embedId
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Got metric-specific token:', data.guestToken);
-        // Store the metric-specific token (we'll use it in the component)
-        setSelectedMetricId(metricId);
+      if (sortDirection === 'asc') {
+        return aValue.toString().localeCompare(bValue.toString());
       } else {
-        console.log('⚠️ Metric-specific token failed, using dashboard token');
-        setSelectedMetricId(metricId);
+        return bValue.toString().localeCompare(aValue.toString());
       }
-    } catch (err) {
-      console.log('⚠️ Metric token request failed, using dashboard token:', err);
-      setSelectedMetricId(metricId);
-    }
-  };
-
-  const handleBackToList = () => {
-    setSelectedMetricId(null);
-  };
-
-  const getMetricIcon = (metricName: string): string => {
-    const name = metricName.toLowerCase();
-    if (name.includes('revenue') || name.includes('sales') || name.includes('profit')) return '💰';
-    if (name.includes('customer') || name.includes('acquisition')) return '👥';
-    if (name.includes('product') || name.includes('analytics')) return '📊';
-    if (name.includes('transaction') || name.includes('order')) return '🛒';
-    if (name.includes('store') || name.includes('location')) return '🏪';
-    if (name.includes('feedback') || name.includes('review')) return '⭐';
-    if (name.includes('price') || name.includes('unit')) return '💲';
-    if (name.includes('trend') || name.includes('percentile')) return '📈';
-    if (name.includes('comparison') || name.includes('vs')) return '📋';
-    if (name.includes('procurement') || name.includes('supply')) return '📦';
-    return '📊'; // Default icon
-  };
+    });
 
   if (loading) {
     return (
-      <div className="reports-container">
-        <div className="reports-header">
-          <h1>📊 Reports</h1>
-          <p>Analytics and metrics overview</p>
-        </div>
-        <div className="loading-state">
-          <div className="loading-spinner"></div>
-          <p>Loading metrics...</p>
-        </div>
+      <div className="p-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">Loading reports and metrics...</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="reports-container">
-        <div className="reports-header">
-          <h1>📊 Reports</h1>
-          <p>Analytics and metrics overview</p>
-        </div>
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Failed to Load Metrics</h3>
-          <p>{error}</p>
-          <button onClick={fetchMetrics} className="retry-button">
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // If a metric is selected, show the metric component directly
-  if (selectedMetricId) {
-    const selectedMetric = metrics.find(m => m.id === selectedMetricId);
-
-    // Use the original metricId from the API for the dbn-metric component
-    const metricIdToUse = selectedMetric?.metricId || selectedMetric?.originalMetricId || selectedMetricId;
-
-    // Log that we're rendering the metric component with detailed ID info
-    console.log('🚀 Rendering metric component directly:', {
-      selectedMetric: selectedMetric?.name || selectedMetricId,
-      metricId: selectedMetricId,
-      originalMetricId: selectedMetric?.originalMetricId,
-      externalMetricId: selectedMetric?.externalMetricId,
-      apiMetricId: selectedMetric?.metricId,
-      actualMetricIdUsed: metricIdToUse,
-      embedId,
-      clientId
-    });
-
-    return (
-      <div className="reports-container">
-        <div className="reports-header">
-          <button
-            onClick={handleBackToList}
-            className="back-button"
-            style={{
-              marginBottom: '1rem',
-              padding: '0.5rem 1rem',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '0.5rem',
-              cursor: 'pointer'
-            }}
-          >
-            ← Back to Reports
-          </button>
-          <h2 style={{ margin: '0.5rem 0', color: '#1f2937' }}>
-            📊 {selectedMetric?.name || 'Metric View'}
-          </h2>
-        </div>
-
-        {/* Embed the specific metric with minimal configuration */}
-        <dbn-metric
-          token={token}
-          client-id={clientId}
-          metric-id={metricIdToUse}
-          variant="card"
-          enable-download-csv
-          enable-email-csv
-          options-icon="kebab-menu-vertical"
-          onError={(e: any) => {
-            console.error('🚨 dbn-metric component error:', e);
-            console.error('🚨 Error details:', {
-              selectedMetricId,
-              originalMetricId: selectedMetric?.originalMetricId,
-              externalMetricId: selectedMetric?.externalMetricId,
-              apiMetricId: selectedMetric?.metricId,
-              metricIdToUse,
-              embedId,
-              error: e
-            });
-          }}
-        />
+      <div className="p-6">
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center">
+              <div className="text-destructive text-3xl mb-4">⚠️</div>
+              <h3 className="font-semibold text-lg mb-2">Error Loading Reports</h3>
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <Button onClick={handleRefresh} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="reports-container">
-      <div className="reports-header">
-        <h1>📊 Reports</h1>
-        <p>Analytics and metrics overview</p>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">Reports & Metrics</h1>
+        <p className="text-muted-foreground">
+          View and analyze metrics from your dashboard
+        </p>
       </div>
 
-      <div className="reports-controls">
-        <div className="view-tabs">
-          <button
-            className={`tab-button ${viewMode === 'table' ? 'active' : ''}`}
-            onClick={() => setViewMode('table')}
-          >
-            📋 Table View
-          </button>
-          <button
-            className={`tab-button ${viewMode === 'widgets' ? 'active' : ''}`}
-            onClick={() => setViewMode('widgets')}
-          >
-            🎛️ Widget View
-          </button>
-        </div>
-
-        <div className="search-container">
-          <input
-            type="text"
-            placeholder="Search metrics..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
-        </div>
-
-        <div className="reports-count">
-          {filteredAndSortedMetrics.length} of {metrics.length} metrics
-        </div>
-      </div>
-
-      {viewMode === 'table' ? (
-        <div className="reports-table-container">
-          <table className="reports-table">
-            <thead>
-              <tr>
-                <th onClick={() => handleSort('name')} className="sortable">
-                  Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </th>
-                <th>Description</th>
-                <th onClick={() => handleSort('lastUpdated')} className="sortable">
-                  Last Updated {sortField === 'lastUpdated' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAndSortedMetrics.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="no-data">
-                    {searchTerm ? 'No metrics match your search' : 'No metrics available'}
-                  </td>
-                </tr>
-              ) : (
-                filteredAndSortedMetrics.map((metric) => (
-                  <tr
-                    key={metric.id}
-                    className="report-row"
-                    onClick={() => handleMetricClick(metric.id)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <td className="report-name">{metric.name}</td>
-                    <td className="report-description">
-                      {metric.description || 'No description available'}
-                    </td>
-                    <td className="report-updated">
-                      {formatDate(metric.lastUpdated)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="reports-widgets-container">
-          {filteredAndSortedMetrics.length === 0 ? (
-            <div className="no-widgets">
-              <div className="empty-icon">📈</div>
-              <h3>{searchTerm ? 'No metrics match your search' : 'No metrics available'}</h3>
-              <p>Try adjusting your search terms or check back later.</p>
+      {/* Controls */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Filters & Search</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search metrics..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
-          ) : (
-            <div className="widgets-grid">
-              {filteredAndSortedMetrics.map((metric) => (
-                <div
-                  key={metric.id}
-                  className="report-widget"
-                  onClick={() => handleMetricClick(metric.id)}
-                >
-                  <div className="widget-icon">
-                    {getMetricIcon(metric.name)}
-                  </div>
-                  <div className="widget-content">
-                    <h3 className="widget-title">{metric.name}</h3>
-                    <p className="widget-description">
-                      {metric.description || 'No description available'}
-                    </p>
-                    <div className="widget-footer">
-                      <span className="widget-updated">
-                        Updated {formatDate(metric.lastUpdated)}
+
+            <div className="flex gap-2">
+              <Select value={sortField} onValueChange={(value: keyof Metric) => setSortField(value)}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="category">Category</SelectItem>
+                  <SelectItem value="lastUpdated">Last Updated</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button
+                variant="outline"
+                onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+              >
+                {sortDirection === 'asc' ? '↑' : '↓'}
+              </Button>
+
+              <Button variant="outline" onClick={handleRefresh}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Metrics Grid */}
+      {filteredAndSortedMetrics.length === 0 ? (
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center">
+              <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="font-semibold text-lg mb-2">No Metrics Found</h3>
+              <p className="text-muted-foreground">
+                {searchTerm
+                  ? `No metrics match your search "${searchTerm}"`
+                  : `No metrics are available for dashboard "${embedId}"`
+                }
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredAndSortedMetrics.map((metric) => (
+            <Card
+              key={metric.id}
+              className={`cursor-pointer transition-all hover:shadow-md ${selectedMetricId === metric.id
+                ? 'ring-2 ring-primary bg-primary/5'
+                : 'hover:border-primary/50'
+                }`}
+              onClick={() => setSelectedMetricId(selectedMetricId === metric.id ? null : metric.id)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-base">{metric.name}</CardTitle>
+                  {metric.status && (
+                    <Badge variant={metric.status === 'active' ? 'default' : 'secondary'}>
+                      {metric.status}
+                    </Badge>
+                  )}
+                </div>
+                {metric.description && (
+                  <CardDescription className="text-sm">
+                    {metric.description}
+                  </CardDescription>
+                )}
+              </CardHeader>
+
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  {metric.value !== undefined && (
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                      <span className="font-semibold">
+                        {metric.value} {metric.unit || ''}
                       </span>
                     </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>ID: {metric.metricId || metric.id}</span>
+                    {metric.category && (
+                      <Badge variant="outline" className="text-xs">
+                        {metric.category}
+                      </Badge>
+                    )}
                   </div>
-                  <div className="widget-arrow">→</div>
+
+                  {metric.lastUpdated && (
+                    <div className="text-xs text-muted-foreground">
+                      Updated: {new Date(metric.lastUpdated).toLocaleDateString()}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 
-      {metrics.length === 0 && !loading && (
-        <div className="empty-state">
-          <div className="empty-icon">📈</div>
-          <h3>No Metrics Available</h3>
-          <p>There are no metrics to display at the moment.</p>
-          <button onClick={fetchMetrics} className="refresh-button">
-            Refresh
-          </button>
-        </div>
-      )}
+      {/* Summary */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-primary">{metrics.length}</div>
+              <div className="text-sm text-muted-foreground">Total Metrics</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-primary">{filteredAndSortedMetrics.length}</div>
+              <div className="text-sm text-muted-foreground">Filtered Results</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-primary">
+                {new Set(metrics.map(m => m.category).filter(Boolean)).size}
+              </div>
+              <div className="text-sm text-muted-foreground">Categories</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-primary">
+                {metrics.filter(m => m.status === 'active').length}
+              </div>
+              <div className="text-sm text-muted-foreground">Active Metrics</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-export default Reports; 
+export default Reports;

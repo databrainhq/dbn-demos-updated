@@ -1,6 +1,31 @@
-# DataBrain React Demo with Backend Integration
+# DataBrain React Demo - Customizability Showcase
 
-A simple demo showing how to integrate DataBrain dashboards in a React app with backend guest token generation.
+A comprehensive React application demonstrating DataBrain's advanced customizability features through a realistic A360 (Automation 360) scenario. This demo showcases permission-based UI, custom widget creation, dashboard publishing, and user role management.
+
+## 🌟 New Demo Features
+
+### 👥 User Personas & Permissions
+- **Michael Thompson** (Process Owner) & **Jake Rodriguez** (Automation Admin)
+- **User Switching** - Easy persona switching for demos
+- **Permission Gates** - UI elements appear/disappear based on user permissions
+
+### 🎨 Custom Widget Creation
+- **Multi-step Wizard** - Data selection → Chart type → Configuration → Preview
+- **10+ Chart Types** - Bar, Line, Pie, Gauge, KPI, Heatmap, and more
+- **Privacy by Default** - Widgets are private until dashboard is published
+
+### 📊 Dashboard Management  
+- **Save As Feature** - Create dashboard copies (e.g., "Overview_Finance")
+- **Publishing System** - Publish to All users, Specific roles, or Specific users
+- **OOTB Protection** - System dashboards protected, custom ones manageable
+
+### 🔐 Security & Governance
+- **Role-based Access Control** - Granular permissions per user
+- **Content Separation** - Clear OOTB vs custom content distinction
+- **Data Access Control** - Users only see permitted data sources
+
+## 📖 Demo Guide
+See [DEMO_GUIDE.md](./DEMO_GUIDE.md) for complete demo script and usage instructions.
 
 ## 🚀 Quick Start
 
@@ -173,6 +198,7 @@ For manual entry testing, use the provided scripts:
 ## 🔗 Resources
 
 - [DataBrain Documentation](https://docs.usedatabrain.com)
+- [Official Embedding Guide](https://docs.usedatabrain.com/developer-docs/how-to-embed)
 - [DataBrain Plugin NPM](https://www.npmjs.com/package/@databrainhq/plugin)
 - [React Documentation](https://react.dev)
 - [Express.js Documentation](https://expressjs.com)
