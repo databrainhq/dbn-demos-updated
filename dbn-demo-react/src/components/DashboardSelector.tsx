@@ -34,6 +34,14 @@ interface DashboardSelectorProps {
   onDashboardsLoaded?: (dashboards: Embed[]) => void;
   embedId?: string;
   autoSelectFirst?: boolean;
+  currentUser?: { 
+    id: string;
+    storeName: string;
+    name: string; 
+    role: string; 
+    customerId: string;
+    clientId: string;
+  };
   debugInfo?: {
     token?: string;
     currentUser?: { name: string; role: string; customerId: string };
@@ -50,6 +58,7 @@ const DashboardSelector: React.FC<DashboardSelectorProps> = ({
   onCreateNew,
   onDashboardsLoaded,
   autoSelectFirst = true,
+  currentUser,
   debugInfo
 }) => {
   const [embeds, setEmbeds] = useState<Embed[]>([]);
@@ -66,22 +75,48 @@ const DashboardSelector: React.FC<DashboardSelectorProps> = ({
     setError(null);
 
     try {
-      console.log('🔍 Fetching embeds for clientId:', clientId);
+      console.log('📊 Step 1: Fetching dashboards from Data App...');
 
-      const response = await fetch('http://localhost:3001/api/list-embeds', {
+      // STEP 1: Fetch dashboards from Data App
+      const dashboardsResponse = await fetch('http://localhost:3002/api/v2/dashboards', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          isPagination: false,
+          pageNumber: 1
+        })
+      });
+
+      if (!dashboardsResponse.ok) {
+        const errorData = await dashboardsResponse.json();
+        console.error('❌ Failed to fetch dashboards from Data App:', errorData);
+        setError(errorData.error || 'Failed to fetch dashboards from Data App');
+        return;
+      }
+
+      const dashboardsData = await dashboardsResponse.json();
+      console.log('✅ Step 1 complete: Fetched dashboards from Data App', dashboardsData);
+
+      console.log('📊 Step 2: Fetching embed configurations...');
+
+      // STEP 2: Fetch embed configurations
+      const embedsResponse = await fetch('http://localhost:3002/api/list-embeds', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           clientId,
+          userId: debugInfo?.currentUser?.storeName || clientId,
           userPersona: debugInfo?.currentUser?.name || 'Unknown'
         })
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Embeds fetched successfully:', data);
+      if (embedsResponse.ok) {
+        const data = await embedsResponse.json();
+        console.log('✅ Step 2 complete: Fetched embed configurations', data);
 
         if (data.embeds && Array.isArray(data.embeds)) {
           const processedEmbeds = data.embeds.map((embed: { embedType: string;[key: string]: unknown }) => ({
@@ -104,18 +139,18 @@ const DashboardSelector: React.FC<DashboardSelectorProps> = ({
           }
         }
       } else {
-        const errorData = await response.json();
+        const errorData = await embedsResponse.json();
         console.error('❌ Failed to fetch embeds:', errorData);
         setError(errorData.error || 'Failed to fetch dashboards');
       }
     } catch (error) {
-      console.error('❌ Network error fetching embeds:', error);
-      setError('Failed to connect to server. Make sure the backend is running on http://localhost:3001');
+      console.error('❌ Network error fetching data:', error);
+      setError('Failed to connect to server. Make sure the backend is running on http://localhost:3002');
     } finally {
       setIsLoading(false);
       isFetching.current = false;
     }
-  }, [clientId]);
+  }, [clientId, debugInfo, onDashboardsLoaded]);
 
   useEffect(() => {
     if (clientId) {
@@ -128,13 +163,9 @@ const DashboardSelector: React.FC<DashboardSelectorProps> = ({
     if (autoSelectFirst && embeds.length > 0 && !hasAutoSelected.current) {
       const firstDashboard = embeds.find(embed => embed.isDashboard);
       if (firstDashboard && selectedDashboardId !== firstDashboard.embedId) {
-        console.log('🎯 Auto-selecting first dashboard from API:', firstDashboard);
-        console.log('Current selectedDashboardId:', selectedDashboardId);
-        console.log('First dashboard embedId:', firstDashboard.embedId);
         hasAutoSelected.current = true;
         onDashboardSelect(firstDashboard.embedId, firstDashboard.name);
       } else if (firstDashboard && selectedDashboardId === firstDashboard.embedId) {
-        console.log('ℹ️ First dashboard already selected, skipping auto-selection');
         hasAutoSelected.current = true;
       }
     }
@@ -147,7 +178,42 @@ const DashboardSelector: React.FC<DashboardSelectorProps> = ({
     }
   };
 
-  const dashboards = embeds.filter(embed => embed.isDashboard);
+  // Filter dashboards based on privacy settings
+  const filterDashboardsByPrivacy = (dashboards: Embed[]): Embed[] => {
+    if (!currentUser) return dashboards;
+    
+    return dashboards.filter(dashboard => {
+      const metadata = dashboard.metadata || {};
+      const isPrivate = metadata.isPrivate === true;
+      const visibility = metadata.visibility as string;
+      const creatorId = metadata.creatorId as string;
+      const userIdentifier = metadata.userIdentifier as string;
+      
+      // Template/OOTB dashboard - always visible
+      if (dashboard.embedId === 'dbn-demo') {
+        return true;
+      }
+      
+      // Public/tenant dashboard - visible to all users in the same tenant
+      if (!isPrivate || visibility === 'tenant') {
+        return true; // Already filtered by clientId in backend
+      }
+      
+      // Private dashboard - only visible to creator
+      if (isPrivate || visibility === 'private') {
+        // Check if current user is the creator (match by storeName or user ID)
+        return creatorId === currentUser.storeName || 
+               userIdentifier === currentUser.storeName ||
+               creatorId === currentUser.id ||
+               userIdentifier === currentUser.id;
+      }
+      
+      return true; // Fallback: show it
+    });
+  };
+
+  const allDashboards = embeds.filter(embed => embed.isDashboard);
+  const dashboards = filterDashboardsByPrivacy(allDashboards);
   const metrics = embeds.filter(embed => embed.isMetric);
 
   return (

@@ -1,3 +1,5 @@
+/* global process */
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 const app = express();
@@ -6,18 +8,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// DataBrain Configuration - Set these values for your app
+// DataBrain Configuration - All values loaded from environment variables
+const DATABRAIN_API_KEY = process.env.DATABRAIN_API_KEY;
+const dataAppName = process.env.DATABRAIN_DATA_APP_NAME;
+const API_BASE_URL = process.env.DATABRAIN_API_BASE_URL || 'https://api.usedatabrain.com'; // Defaults to production
+const workspaceName = process.env.DATABRAIN_WORKSPACE_NAME || 'Demo Workspace';
 
-const DATABRAIN_API_TOKEN = '98847992-1b1a-4dac-a8af-206e97cd4c1a'; //UAT environment
-const dataAppName = 'Demo Sales Data App'; // UAT environment
-const API_BASE_URL = 'https://uat-api.usedatabrain.com'; // UAT environment
-
-//const DATABRAIN_API_TOKEN = '8b414240-91fb-4844-ab65-2303e58be363'// Production environment
-//const dataAppName = 'Demo Embed'// 'Production environment
-//const API_BASE_URL = 'https://api.usedatabrain.com'; // Production environment
-
-
-const workspaceName = 'Demo Workspace'; // Set your workspace name here
 // Helper function to generate dashboard ID
 const generateDashboardId = (name) => {
   return name
@@ -28,29 +24,166 @@ const generateDashboardId = (name) => {
     + '-' + Date.now();
 };
 
+// Fetch available datamarts from DataBrain
+app.get('/api/datamarts/list', async (req, res) => {
+  try {
+    if (!DATABRAIN_API_KEY || DATABRAIN_API_KEY === 'your-databrain-api-key-here') {
+      return res.status(500).json({
+        error: 'API Key not configured'
+      });
+    }
+
+    console.log('📊 Fetching datamarts from DataBrain...');
+
+    const response = await fetch(`${API_BASE_URL}/api/v2/dataApp/datamart/list`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${DATABRAIN_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ isPagination: false })
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.data) {
+      const datamarts = data.data.map(dm => ({
+        name: dm.name,
+        schemaName: dm.datamartOrganization?.schemaName,
+        tableName: dm.datamartOrganization?.tableName,
+        integration: dm.companyIntegration?.name
+      }));
+
+      console.log(`✅ Found ${datamarts.length} datamarts:`, datamarts.map(d => d.name));
+
+      res.json({
+        success: true,
+        datamarts: datamarts
+      });
+    } else {
+      throw new Error(data.error?.message || 'Failed to fetch datamarts');
+    }
+  } catch (error) {
+    console.error('ERROR fetching datamarts:', error);
+    res.status(500).json({
+      error: 'Failed to fetch datamarts',
+      details: error.message
+    });
+  }
+});
+
+// Configuration Management Endpoints
+// Check configuration status
+app.get('/api/config/status', (req, res) => {
+  try {
+    const status = {
+      isConfigured: !!(DATABRAIN_API_KEY && dataAppName),
+      hasApiKey: !!DATABRAIN_API_KEY,
+      hasDataAppName: !!dataAppName,
+      apiBaseUrl: API_BASE_URL,
+      workspaceName: workspaceName
+    };
+
+    res.json(status);
+  } catch (error) {
+    console.error('ERROR checking config status:', error);
+    res.status(500).json({ error: 'Failed to check configuration status' });
+  }
+});
+
+// Validate configuration by testing credentials with DataBrain API
+app.post('/api/config/validate', async (req, res) => {
+  try {
+    const { apiKey, dataAppName: testDataAppName } = req.body;
+
+    // Validate required fields
+    if (!apiKey || !testDataAppName) {
+      return res.status(400).json({
+        error: 'API Key and Data App Name are required',
+        valid: false
+      });
+    }
+
+    // Test the credentials by creating a guest token with DataBrain API
+    try {
+      const testResponse = await fetch(`${API_BASE_URL}/api/v2/guest-token/create`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          clientId: 'validation-test',
+          dataAppName: testDataAppName
+        })
+      });
+
+      const testData = await testResponse.json();
+
+      if (testResponse.ok && testData.token) {
+        // Credentials are valid
+        return res.json({
+          valid: true,
+          message: 'Credentials validated successfully'
+        });
+      } else {
+        // Invalid credentials or API error
+        let errorMessage = 'Invalid credentials';
+
+        if (testData.error) {
+          if (testData.error.includes('Invalid key') || testData.error.includes('Invalid token') || testData.error.includes('Unauthorized')) {
+            errorMessage = 'Invalid API Key';
+          } else if (testData.error.includes('dataApp') || testData.error.includes('not found')) {
+            errorMessage = 'Data App Name not found';
+          } else {
+            errorMessage = testData.error;
+          }
+        }
+
+        return res.status(401).json({
+          valid: false,
+          error: errorMessage
+        });
+      }
+    } catch (apiError) {
+      return res.status(500).json({
+        valid: false,
+        error: 'Failed to connect to DataBrain API. Please check your internet connection.'
+      });
+    }
+  } catch (error) {
+    console.error('ERROR validating config:', error);
+    res.status(500).json({
+      valid: false,
+      error: 'Failed to validate configuration'
+    });
+  }
+});
+
 // Guest token for Dashboards (data app-based, v2 API)
-// Following official DataBrain documentation: https://docs.usedatabrain.com/developer-docs/how-to-embed
+// API Reference: https://docs.usedatabrain.com/developer-docs/helpers/api-reference/token
+// Embedding Guide: https://docs.usedatabrain.com/developer-docs/how-to-embed
 app.post('/api/dashboard-guest-token', async (req, res) => {
   try {
-    // Validate API token configuration
-    if (!DATABRAIN_API_TOKEN || DATABRAIN_API_TOKEN === 'your-databrain-api-token-here') {
-      console.error('ERROR: API Token not configured properly');
+    // Validate API Key configuration
+    if (!DATABRAIN_API_KEY) {
+      console.error('ERROR: API Key not configured properly');
       return res.status(500).json({
-        error: 'API Token not configured. Please set DATABRAIN_API_TOKEN in backend/server.js line 10.',
-        details: 'Replace "your-databrain-api-token-here" with your actual DataBrain API token'
+        error: 'API Key not configured. Please set DATABRAIN_API_KEY environment variable.',
+        details: 'Set the environment variable with your actual DataBrain API key'
       });
     }
 
     // Validate data app name configuration
-    if (!dataAppName || dataAppName === 'your-data-app-name') {
+    if (!dataAppName) {
       console.error('ERROR: Data App Name not configured properly');
       return res.status(500).json({
-        error: 'Data App Name not configured. Please set dataAppName in backend/server.js line 11.',
-        details: 'Set the exact name of your DataBrain Data App'
+        error: 'Data App Name not configured. Please set DATABRAIN_DATA_APP_NAME environment variable.',
+        details: 'Set the environment variable with the exact name of your DataBrain Data App'
       });
     }
 
-    const { clientId, customerId, dashboardIds, userPersona } = req.body;
+    const { clientId, customerId, dashboardIds, userPersona, filterFieldName, filterValue } = req.body;
 
     // Validate required parameters
     if (!clientId) {
@@ -60,78 +193,87 @@ app.post('/api/dashboard-guest-token', async (req, res) => {
       });
     }
 
-    // For demo purposes, we expect clientId to be '101' (top-level tenant)
-    // and customerId to be the specific customer ID for data filtering
-    if (clientId !== '101') {
-      console.warn(`Warning: Expected clientId '101' but received '${clientId}' - continuing anyway for demo flexibility`);
+    // For demo purposes, we expect clientId to be 'Team 1', 'Team 2', etc. (top-level tenant)
+    // Validate clientId format
+    if (!clientId.startsWith('Team ')) {
+      console.warn(`Warning: Expected clientId like 'Team 1' but received '${clientId}' - continuing anyway for demo flexibility`);
     }
 
-    console.log('Creating data app-based guest token for multiple dashboards with customer persona filtering');
-    console.log('Request details:', {
-      clientId,
-      customerId,
-      dashboardIds,
-      userPersona,
-      dataAppName,
-      endpoint: `${API_BASE_URL}/api/v2/guest-token/create`,
-      hasCustomerFiltering: !!customerId,
-      hasDashboardFiltering: !!(dashboardIds && dashboardIds.length > 0)
-    });
 
-    // Build request body with dashboard app filters for customer persona
+    // Build request body following the new v2 API specification
+    // Reference: https://docs.usedatabrain.com/developer-docs/helpers/api-reference/token
     const requestBody = {
       clientId: clientId,
       dataAppName: dataAppName
     };
 
-    // Create guest token with customer filtering
-    if (customerId && dashboardIds && Array.isArray(dashboardIds) && dashboardIds.length > 0) {
-      // Use all dashboard IDs - both template and client-specific dashboards should work now
-      // Since we're using the proper dashboardEmbed/create API, client dashboards will have proper IDs
-      requestBody.params = {
-        dashboardAppFilters: dashboardIds.map(dashboardId => ({
+    // Add optional parameters for filtering and permissions
+    // Using the new API structure with params object for filters
+    // Note: Only apply filters to dashboards that have the app filter configured
+    // This prevents errors when newly created dashboards don't have the app filter yet
+    if (dashboardIds && dashboardIds.length > 0 && filterFieldName && filterValue) {
+      // Filter to only apply app filters to known template dashboards that have filters configured
+      // Newly created user dashboards don't inherit app filter config automatically
+      const knownDashboardsWithFilters = ['dbn-demo']; // Template dashboards with app filters
+      const dashboardsToFilter = dashboardIds.filter(id => knownDashboardsWithFilters.includes(id));
+
+      if (dashboardsToFilter.length > 0) {
+        requestBody.params = {};
+
+        // Add dashboard-level filters only to dashboards that support them
+        requestBody.params.dashboardAppFilters = dashboardsToFilter.map(dashboardId => ({
           dashboardId: dashboardId,
           values: {
-            'Customer App filter': customerId
+            [filterFieldName]: filterValue  // Dynamic filter field name and value
           },
           isShowOnUrl: false
-        }))
-      };
-      console.log('Dashboard app filters configured for all dashboards:', {
-        dashboardCount: dashboardIds.length,
-        dashboardIds: dashboardIds,
-        filterKey: 'Customer App filter',
-        filterValue: customerId,
-        userPersona: userPersona || 'unknown'
-      });
-    } else if (customerId) {
-      // Create general token without dashboard-specific filters
-      // This is for initial authentication - no special params needed
-      console.log('Creating general guest token for initial authentication (no dashboard-specific filters)');
-      console.log('Customer filtering will be applied at the application level');
+        }));
+
+        console.log(`🔍 Applying app filter: ${filterFieldName} = "${filterValue}" to ${dashboardsToFilter.length} dashboard(s):`, dashboardsToFilter);
+        if (dashboardIds.length > dashboardsToFilter.length) {
+          console.log(`⚠️ Skipping app filter for ${dashboardIds.length - dashboardsToFilter.length} user-created dashboard(s) (no filter configured)`);
+        }
+      } else {
+        console.log(`⚠️ No dashboards with app filter configuration found. Skipping filter.`);
+      }
     } else {
-      console.log('Creating general guest token without customer filtering');
+      console.log(`⚠️ Skipping app filter (filterFieldName: ${filterFieldName}, filterValue: ${filterValue}, dashboards: ${dashboardIds?.length || 0})`);
     }
 
-    console.log('Actual request body being sent:', JSON.stringify(requestBody, null, 2));
+    // Optional: Add permissions configuration for UI controls
+    // Customize based on your requirements
+    // Note: Email reports are controlled by accessSettings.isAllowEmailReports at embed level, not here
+    requestBody.permissions = {
+      isEnableManageMetrics: true,
+      isEnableCreateDashboardView: true,
+      isEnableCustomizeLayout: true,
+      isEnableUnderlyingData: true,
+      isEnableDownloadMetrics: true,
+      isShowSideBar: true,
+      isShowDashboardName: true
+    };
+
+    // Optional: Add token expiration (in milliseconds)
+    // Uncomment to enable token expiration
+    // requestBody.expiryTime = 3600000; // 1 hour
+
+    // Log the complete request body being sent to DataBrain
+    console.log('📤 DataBrain API Request:', JSON.stringify(requestBody, null, 2));
 
     // Call DataBrain v2 API as per official documentation
     const response = await fetch(`${API_BASE_URL}/api/v2/guest-token/create`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${DATABRAIN_API_TOKEN}`,
+        'Authorization': `Bearer ${DATABRAIN_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
     });
 
     const data = await response.json();
-    console.log('DataBrain API Response Status:', response.status, response.statusText);
 
-    if (response.ok && (data.guest_token || data.token)) {
-      const guestToken = data.guest_token || data.token;
-
-      console.log('SUCCESS: Guest token created successfully for client:', clientId);
+    if (response.ok && data.token) {
+      const guestToken = data.token;
 
       res.json({
         success: true,
@@ -141,15 +283,15 @@ app.post('/api/dashboard-guest-token', async (req, res) => {
         dashboardIds: dashboardIds,
         userPersona: userPersona,
         dataAppName: dataAppName,
-        hasFiltering: !!(dashboardIds && dashboardIds.length > 0 && customerId),
+        hasDashboardAppFilters: !!(dashboardIds && dashboardIds.length > 0 && customerId),
         filterDetails: dashboardIds && dashboardIds.length > 0 && customerId ? {
-          filterName: 'Customer App filter',
+          filterType: 'dashboardAppFilters',
           filterValue: customerId,
           appliedToDashboards: dashboardIds,
           totalDashboards: dashboardIds.length
         } : null,
         message: dashboardIds && dashboardIds.length > 0 && customerId
-          ? `Guest token created successfully with customer persona filtering for ${userPersona || 'user'} (Customer ID: ${customerId}) across ${dashboardIds.length} dashboards`
+          ? `Guest token created successfully with dashboard app filters for ${userPersona || 'user'} (Customer ID: ${customerId}) across ${dashboardIds.length} dashboards`
           : 'Guest token created successfully for dashboard embedding'
       });
     } else {
@@ -161,7 +303,7 @@ app.post('/api/dashboard-guest-token', async (req, res) => {
           status: response.status,
           statusText: response.statusText
         },
-        suggestion: 'Verify that your API token has permission to create guest tokens for the specified data app'
+        suggestion: 'Verify that your API Key has permission to create guest tokens for the specified data app'
       });
     }
 
@@ -178,22 +320,21 @@ app.post('/api/dashboard-guest-token', async (req, res) => {
 // New endpoint to fetch dashboards from data app
 app.post('/api/v2/dashboards', async (req, res) => {
   try {
-    // Check if API token is configured
-    if (!DATABRAIN_API_TOKEN || DATABRAIN_API_TOKEN === 'your-databrain-api-token-here') {
+    // Check if API key is configured
+    if (!DATABRAIN_API_KEY || DATABRAIN_API_KEY === 'your-databrain-api-key-here') {
       return res.status(500).json({
-        error: 'API Token not configured. Please set DATABRAIN_API_TOKEN in backend/server.js line 10.'
+        error: 'API Key not configured. Please set DATABRAIN_API_KEY in backend/server.js line 10.'
       });
     }
 
     const { isPagination = false, pageNumber = 1 } = req.body;
 
-    console.log('API Call: Fetching dashboards from DataBrain');
 
     // Call DataBrain Data App Embedding API for dashboards
     const response = await fetch(`${API_BASE_URL}/api/v2/dataApp/dashboards`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${DATABRAIN_API_TOKEN}`,
+        'Authorization': `Bearer ${DATABRAIN_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -268,22 +409,21 @@ app.post('/api/v2/dashboards', async (req, res) => {
 // New endpoint to try getting embeddable metrics from workspace context
 app.post('/api/v2/embeddable-metrics', async (req, res) => {
   try {
-    // Check if API token is configured
-    if (!DATABRAIN_API_TOKEN || DATABRAIN_API_TOKEN === 'your-databrain-api-token-here') {
+    // Check if API key is configured
+    if (!DATABRAIN_API_KEY || DATABRAIN_API_KEY === 'your-databrain-api-key-here') {
       return res.status(500).json({
-        error: 'API Token not configured. Please set DATABRAIN_API_TOKEN in backend/server.js line 10.'
+        error: 'API Key not configured. Please set DATABRAIN_API_KEY in backend/server.js line 10.'
       });
     }
 
     const { workspaceName, dashboardId } = req.body;
 
-    console.log('API Call: Fetching embeddable metrics from workspace context');
 
     // Try the traditional workspace-based API
     const response = await fetch(`${API_BASE_URL}/api/metrics`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${DATABRAIN_API_TOKEN}`,
+        'Authorization': `Bearer ${DATABRAIN_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
@@ -302,7 +442,6 @@ app.post('/api/v2/embeddable-metrics', async (req, res) => {
         lastUpdated: new Date().toISOString()
       }));
 
-      console.log(`Fetched ${metrics.length} metrics from traditional API`);
 
       res.json({
         success: true,
@@ -323,13 +462,12 @@ app.post('/api/v2/embeddable-metrics', async (req, res) => {
 // Fetch dashboard metrics endpoint
 app.post('/api/v2/dashboard-metrics', async (req, res) => {
   try {
-    console.log('/api/v2/dashboard-metrics - Request received');
     console.log('Request body:', JSON.stringify(req.body, null, 2));
 
-    // Check if API token is configured
-    if (!DATABRAIN_API_TOKEN || DATABRAIN_API_TOKEN === 'your-databrain-api-token-here') {
+    // Check if API key is configured
+    if (!DATABRAIN_API_KEY || DATABRAIN_API_KEY === 'your-databrain-api-key-here') {
       return res.status(500).json({
-        error: 'API Token not configured. Please set DATABRAIN_API_TOKEN in backend/server.js line 10.'
+        error: 'API Key not configured. Please set DATABRAIN_API_KEY in backend/server.js line 10.'
       });
     }
 
@@ -360,14 +498,12 @@ app.post('/api/v2/dashboard-metrics', async (req, res) => {
 // Fetch metrics by workspace and dashboard using DataBrain Embedding API
 app.post('/api/v2/metrics', async (req, res) => {
   try {
-    console.log('/api/metrics - Request received');
     console.log('Request body:', JSON.stringify(req.body, null, 2));
 
-    // Check if API token is configured
-    if (!DATABRAIN_API_TOKEN || DATABRAIN_API_TOKEN === 'your-databrain-api-token-here') {
-      console.log('ERROR: API Token not configured');
+    // Check if API key is configured
+    if (!DATABRAIN_API_KEY || DATABRAIN_API_KEY === 'your-databrain-api-key-here') {
       return res.status(500).json({
-        error: 'API Token not configured. Please set DATABRAIN_API_TOKEN in backend/server.js line 10.'
+        error: 'API Key not configured. Please set DATABRAIN_API_KEY in backend/server.js line 10.'
       });
     }
 
@@ -389,27 +525,23 @@ app.post('/api/v2/metrics', async (req, res) => {
       isPagination: false
     };
 
-    console.log('API Call: Fetching metrics by workspace and dashboard');
-    console.log(`Request URL: ${API_BASE_URL}/api/v2/workspace/dashboard/metrics`);
     console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
     // Use the DataBrain Embedding API for metrics by workspace and dashboard
     const response = await fetch(`${API_BASE_URL}/api/v2/workspace/dashboard/metrics`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${DATABRAIN_API_TOKEN}`,
+        'Authorization': `Bearer ${DATABRAIN_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
     });
 
-    console.log('Response status:', response.status, response.statusText);
 
     const data = await response.json();
     console.log('Response data:', JSON.stringify(data, null, 2));
 
     if (response.ok && data.data && Array.isArray(data.data)) {
-      console.log('SUCCESS: API response successful, processing metrics');
 
       // Transform the API response
       const metrics = data.data.map((metric, index) => ({
@@ -426,7 +558,6 @@ app.post('/api/v2/metrics', async (req, res) => {
         workspaceName: workspaceToUse
       }));
 
-      console.log(`SUCCESS: Processed ${metrics.length} metrics successfully`);
       console.log('Sample metric:', JSON.stringify(metrics[0], null, 2));
 
       return res.json({
@@ -435,7 +566,6 @@ app.post('/api/v2/metrics', async (req, res) => {
         source: 'workspace-dashboard-metrics-api'
       });
     } else if (data.error) {
-      console.log('ERROR: DataBrain API returned error:', data.error);
       return res.status(400).json({
         error: 'DataBrain API Error',
         details: data.error
@@ -452,7 +582,6 @@ app.post('/api/v2/metrics', async (req, res) => {
     throw new Error('Invalid API response structure');
 
   } catch (apiError) {
-    console.log('ERROR: Exception in /api/metrics:', apiError);
     console.log('ERROR: Error details:', {
       message: apiError.message,
       stack: apiError.stack,
@@ -470,25 +599,25 @@ app.post('/api/v2/metrics', async (req, res) => {
 // Create Dashboard using DataBrain v2 API
 app.post('/api/v2/create-dashboard', async (req, res) => {
   try {
-    // Validate API token configuration
-    if (!DATABRAIN_API_TOKEN || DATABRAIN_API_TOKEN === 'your-databrain-api-token-here') {
-      console.error('ERROR: API Token not configured properly');
+    // Validate API Key configuration
+    if (!DATABRAIN_API_KEY) {
+      console.error('ERROR: API Key not configured properly');
       return res.status(500).json({
-        error: 'API Token not configured. Please set DATABRAIN_API_TOKEN in backend/server.js line 10.',
-        details: 'Replace "your-databrain-api-token-here" with your actual DataBrain API token'
+        error: 'API Key not configured. Please set DATABRAIN_API_KEY environment variable.',
+        details: 'Set the environment variable with your actual DataBrain API key'
       });
     }
 
     // Validate data app name configuration
-    if (!dataAppName || dataAppName === 'your-data-app-name') {
+    if (!dataAppName) {
       console.error('ERROR: Data App Name not configured properly');
       return res.status(500).json({
-        error: 'Data App Name not configured. Please set dataAppName in backend/server.js line 11.',
-        details: 'Set the exact name of your DataBrain Data App'
+        error: 'Data App Name not configured. Please set DATABRAIN_DATA_APP_NAME environment variable.',
+        details: 'Set the environment variable with the exact name of your DataBrain Data App'
       });
     }
 
-    const { dashboardName, description, datamartName, dashboardId } = req.body;
+    let { dashboardName, description, datamartName, dashboardId, userIdentifier, clientId, isPrivate } = req.body;
 
     // Validate required parameters
     if (!dashboardName) {
@@ -498,7 +627,33 @@ app.post('/api/v2/create-dashboard', async (req, res) => {
       });
     }
 
-    const { clientId } = req.body;
+    // If no datamartName provided, fetch the first available datamart
+    if (!datamartName) {
+      console.log('📊 No datamart provided, fetching from DataBrain...');
+      try {
+        const datamartResponse = await fetch(`${API_BASE_URL}/api/v2/dataApp/datamart/list`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${DATABRAIN_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ isPagination: false })
+        });
+
+        const datamartData = await datamartResponse.json();
+
+        if (datamartResponse.ok && datamartData.data && datamartData.data.length > 0) {
+          datamartName = datamartData.data[0].name;
+          console.log(`✅ Auto-selected datamart: ${datamartName}`);
+        } else {
+          console.warn('⚠️ No datamarts found, using default');
+          datamartName = 'Sales Management Datamart'; // Fallback
+        }
+      } catch (dmError) {
+        console.error('ERROR fetching datamarts:', dmError);
+        datamartName = 'Sales Management Datamart'; // Fallback on error
+      }
+    }
 
     // Validate clientId
     if (!clientId) {
@@ -511,47 +666,11 @@ app.post('/api/v2/create-dashboard', async (req, res) => {
     // Generate new unique dashboard ID for the new dashboard
     const newDashboardId = generateDashboardId(dashboardName);
 
-    // First, try to get available dashboards to use as template
-    let templateDashboardId = 'dbn-demo'; // Template dashboard for creating new dashboards
+    
 
-    try {
-      console.log('🔍 Fetching available dashboards to find a template...');
-      const dashboardsResponse = await fetch(`${API_BASE_URL}/api/v2/dataApp/dashboards`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${DATABRAIN_API_TOKEN}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (dashboardsResponse.ok) {
-        const dashboardsData = await dashboardsResponse.json();
-        if (dashboardsData.data && dashboardsData.data.length > 0) {
-          // Use the first available dashboard as template
-          templateDashboardId = dashboardsData.data[0].externalDashboardId || dashboardsData.data[0].id;
-          console.log('✅ Found template dashboard:', templateDashboardId);
-        } else {
-          console.log('⚠️ No dashboards found, using default template:', templateDashboardId);
-        }
-      } else {
-        console.log('⚠️ Could not fetch dashboards, using default template:', templateDashboardId);
-      }
-    } catch (error) {
-      console.log('⚠️ Error fetching dashboards for template, using default:', templateDashboardId);
-    }
-
-    console.log('Creating new dashboard embed configuration');
-    console.log('Request details:', {
-      dashboardName,
-      newDashboardId,
-      templateDashboardId: 'dbn-demo',
-      clientId,
-      description,
-      datamartName,
-      workspaceName,
-      endpoint: `${API_BASE_URL}/api/v2/dataApp/dashboardEmbed/create`
-    });
-
+    // Determine privacy settings based on isPrivate flag
+    const dashboardIsPrivate = isPrivate === true;
+    
     // Prepare the request body for DataBrain dashboardEmbed/create API
     // This creates a new dashboard for a specific client with template filters
     // Based on DataBrain API docs: name must be in metadata, not at top level
@@ -559,21 +678,26 @@ app.post('/api/v2/create-dashboard', async (req, res) => {
       dashboardId: newDashboardId, // New unique dashboard ID
       clientId: clientId, // Client identifier for multi-tenant access
       templateDashboardId: 'dbn-demo', // Template dashboard to clone filters from
+      isAllowPrivateMetricsByDefault: dashboardIsPrivate, // Private: metrics only visible to creator; Public: visible to all in tenant
       metadata: {
         name: dashboardName, // Dashboard display name (as per DataBrain API docs)
         description: description || '', // Dashboard description
         createdAt: new Date().toISOString(),
         createdBy: 'API',
-        originalName: dashboardName // Backup field for name resolution
+        userIdentifier: userIdentifier, // Store Name (e.g., 'Ramirez Ltd') - used for grouping/filtering
+        originalName: dashboardName, // Backup field for name resolution
+        isPrivate: dashboardIsPrivate, // Privacy flag for UI filtering
+        visibility: dashboardIsPrivate ? 'private' : 'tenant', // Dashboard visibility level
+        creatorId: userIdentifier // Track creator for private dashboard access control
       },
       workspaceName: workspaceName,
       accessSettings: {
-        datamartName: datamartName || 'Demo Embed Datamart',
+        datamartName: datamartName,
         isAllowAiPilot: true,
         isAllowEmailReports: true,
         isAllowManageMetrics: true,
         isAllowMetricCreation: true,
-        isAllowMetricDeletion: true,
+        isAllowMetricDeletion: dashboardIsPrivate ? true : true, // Allow deletion for both (can be restricted later)
         isAllowMetricLayoutChange: true,
         isAllowMetricUpdate: true,
         isAllowUnderlyingData: true,
@@ -583,16 +707,22 @@ app.post('/api/v2/create-dashboard', async (req, res) => {
     };
 
     // Call DataBrain dashboardEmbed/create API to create client-specific dashboard
+    console.log('📤 Creating dashboard with config:', JSON.stringify({
+      workspaceName,
+      templateDashboardId: requestBody.templateDashboardId,
+      isPrivate: dashboardIsPrivate,
+      clientId
+    }, null, 2));
+    
     const response = await fetch(`${API_BASE_URL}/api/v2/dataApp/dashboardEmbed/create`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${DATABRAIN_API_TOKEN}`,
+        'Authorization': `Bearer ${DATABRAIN_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
     });
 
-    console.log('DataBrain API Response Status:', response.status, response.statusText);
     console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     // Check if response is JSON before parsing
@@ -608,7 +738,6 @@ app.post('/api/v2/create-dashboard', async (req, res) => {
     }
 
     if (response.ok && !data.error) {
-      console.log('SUCCESS: Dashboard embed configuration created successfully');
 
       res.json({
         success: true,
@@ -617,11 +746,18 @@ app.post('/api/v2/create-dashboard', async (req, res) => {
         dashboardName: dashboardName,
         description: description,
         clientId: clientId,
-        message: 'Dashboard created successfully for client',
+        isPrivate: dashboardIsPrivate,
+        visibility: dashboardIsPrivate ? 'private' : 'tenant',
+        message: `Dashboard created successfully for client${dashboardIsPrivate ? ' (private)' : ' (shared with tenant)'}`,
         data: data
       });
     } else {
-      console.error('ERROR: Failed to create dashboard:', data);
+      console.error('ERROR: Failed to create dashboard:', JSON.stringify(data, null, 2));
+      console.error('🔍 Debug Info:');
+      console.error('   Workspace Name:', workspaceName);
+      console.error('   Template Dashboard ID:', requestBody.templateDashboardId);
+      console.error('   Client ID:', clientId);
+      
       res.status(400).json({
         error: 'Failed to create dashboard embed configuration',
         details: data.error || data,
@@ -629,7 +765,14 @@ app.post('/api/v2/create-dashboard', async (req, res) => {
           status: response.status,
           statusText: response.statusText
         },
-        suggestion: 'Verify that your API token has permission to create embed configurations in the specified workspace'
+        debugInfo: {
+          workspaceName: workspaceName,
+          templateDashboardId: requestBody.templateDashboardId,
+          clientId: clientId,
+          suggestion: data.error?.code === 'TEMPLATE_DASHBOARD_ERROR' 
+            ? 'Check that DATABRAIN_WORKSPACE_NAME matches your actual DataBrain workspace name'
+            : 'Verify that your API Key has permission to create embed configurations in the specified workspace'
+        }
       });
     }
 
@@ -647,18 +790,19 @@ app.post('/api/v2/create-dashboard', async (req, res) => {
 // Copy/Save As Dashboard using DataBrain v2 API
 app.post('/api/v2/copy-dashboard', async (req, res) => {
   try {
-    // Validate API token configuration
-    if (!DATABRAIN_API_TOKEN || DATABRAIN_API_TOKEN === 'your-databrain-api-token-here') {
+    // Validate API Key configuration
+    if (!DATABRAIN_API_KEY || DATABRAIN_API_KEY === 'your-databrain-api-key-here') {
       return res.status(500).json({
-        error: 'API Token not configured. Please set DATABRAIN_API_TOKEN in backend/server.js line 10.'
+        error: 'API Key not configured. Please set DATABRAIN_API_KEY in backend/server.js line 10.'
       });
     }
 
-    const {
+    let {
       sourceDashboardId,
       newDashboardName,
       description,
-      clientId
+      clientId,
+      datamartName
     } = req.body;
 
     // Validate required parameters
@@ -668,11 +812,36 @@ app.post('/api/v2/copy-dashboard', async (req, res) => {
       });
     }
 
+    // If no datamartName provided, fetch the first available datamart
+    if (!datamartName) {
+      try {
+        const datamartResponse = await fetch(`${API_BASE_URL}/api/v2/dataApp/datamart/list`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${DATABRAIN_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ isPagination: false })
+        });
+
+        const datamartData = await datamartResponse.json();
+
+        if (datamartResponse.ok && datamartData.data && datamartData.data.length > 0) {
+          datamartName = datamartData.data[0].name;
+        } else {
+          datamartName = 'Sales Management Datamart'; // Fallback
+        }
+      } catch (dmError) {
+        datamartName = 'Sales Management Datamart'; // Fallback on error
+      }
+    }
+
     console.log('Copying dashboard with DataBrain API:', {
       sourceDashboardId,
       newDashboardName,
       description,
-      clientId
+      clientId,
+      datamartName
     });
 
     // Create new embed configuration based on existing dashboard
@@ -681,7 +850,7 @@ app.post('/api/v2/copy-dashboard', async (req, res) => {
       embedType: 'dashboard',
       workspaceName: workspaceName,
       accessSettings: {
-        datamartName: 'Demo Embed Datamart',
+        datamartName: datamartName,
         isAllowAiPilot: true,
         isAllowEmailReports: true,
         isAllowManageMetrics: true,
@@ -705,17 +874,15 @@ app.post('/api/v2/copy-dashboard', async (req, res) => {
     const response = await fetch(`${API_BASE_URL}/api/v2/dataApp/embed/create`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${DATABRAIN_API_TOKEN}`,
+        'Authorization': `Bearer ${DATABRAIN_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
     });
 
     const data = await response.json();
-    console.log('DataBrain Dashboard Copy Response:', response.status, response.statusText);
 
     if (response.ok && !data.error) {
-      console.log('SUCCESS: Dashboard copy created successfully');
 
       res.json({
         success: true,
@@ -813,12 +980,12 @@ app.post('/api/v2/publish-dashboard', async (req, res) => {
 // Delete embed endpoint - Use DataBrain Delete Embed API
 app.post('/api/delete-embed', async (req, res) => {
   try {
-    // Validate API token configuration
-    if (!DATABRAIN_API_TOKEN || DATABRAIN_API_TOKEN === 'your-databrain-api-token-here') {
-      console.error('ERROR: API Token not configured properly');
+    // Validate API Key configuration
+    if (!DATABRAIN_API_KEY || DATABRAIN_API_KEY === 'your-databrain-api-key-here') {
+      console.error('ERROR: API Key not configured properly');
       return res.status(500).json({
-        error: 'API Token not configured. Please set DATABRAIN_API_TOKEN in backend/server.js line 10.',
-        details: 'Replace "your-databrain-api-token-here" with your actual DataBrain API token'
+        error: 'API Key not configured. Please set DATABRAIN_API_KEY in backend/server.js line 10.',
+        details: 'Replace "your-databrain-api-key-here" with your actual DataBrain API Key'
       });
     }
 
@@ -841,7 +1008,7 @@ app.post('/api/delete-embed', async (req, res) => {
     const response = await fetch(`${API_BASE_URL}/api/v2/dataApp/embed/delete`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${DATABRAIN_API_TOKEN}`,
+        'Authorization': `Bearer ${DATABRAIN_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -850,7 +1017,6 @@ app.post('/api/delete-embed', async (req, res) => {
     });
 
     const data = await response.json();
-    console.log('DataBrain Delete Embed API Response Status:', response.status, response.statusText);
     console.log('Response data:', JSON.stringify(data, null, 2));
 
     if (!response.ok) {
@@ -862,7 +1028,6 @@ app.post('/api/delete-embed', async (req, res) => {
       });
     }
 
-    console.log('✅ Embed deleted successfully:', embedId);
 
     return res.json({
       success: true,
@@ -884,12 +1049,12 @@ app.post('/api/delete-embed', async (req, res) => {
 // List embeds endpoint - Use DataBrain List All Embeds API
 app.post('/api/list-embeds', async (req, res) => {
   try {
-    // Validate API token configuration
-    if (!DATABRAIN_API_TOKEN || DATABRAIN_API_TOKEN === 'your-databrain-api-token-here') {
-      console.error('ERROR: API Token not configured properly');
+    // Validate API Key configuration
+    if (!DATABRAIN_API_KEY || DATABRAIN_API_KEY === 'your-databrain-api-key-here') {
+      console.error('ERROR: API Key not configured properly');
       return res.status(500).json({
-        error: 'API Token not configured. Please set DATABRAIN_API_TOKEN in backend/server.js line 10.',
-        details: 'Replace "your-databrain-api-token-here" with your actual DataBrain API token'
+        error: 'API Key not configured. Please set DATABRAIN_API_KEY in backend/server.js line 10.',
+        details: 'Replace "your-databrain-api-key-here" with your actual DataBrain API Key'
       });
     }
 
@@ -909,6 +1074,15 @@ app.post('/api/list-embeds', async (req, res) => {
       endpoint: `${API_BASE_URL}/api/v2/dataApp/embed/list`
     });
 
+    // Debug: Log API key info
+    console.log('🔍 Debug API Key:', {
+      hasKey: !!DATABRAIN_API_KEY,
+      keyPrefix: DATABRAIN_API_KEY ? DATABRAIN_API_KEY.substring(0, 10) : 'null',
+      keyLength: DATABRAIN_API_KEY?.length || 0,
+      keyType: typeof DATABRAIN_API_KEY,
+      hasTrimmed: DATABRAIN_API_KEY ? DATABRAIN_API_KEY.trim().length : 0
+    });
+
     // Use DataBrain List All Embeds API without clientId filtering
     // We'll get all embeds and then filter by user context in the application layer
     const requestBody = {
@@ -920,14 +1094,13 @@ app.post('/api/list-embeds', async (req, res) => {
     const response = await fetch(`${API_BASE_URL}/api/v2/dataApp/embed/list`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${DATABRAIN_API_TOKEN}`,
+        'Authorization': `Bearer ${DATABRAIN_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
     });
 
     const data = await response.json();
-    console.log('DataBrain List Embeds API Response Status:', response.status, response.statusText);
     console.log('Response data:', JSON.stringify(data, null, 2));
 
     if (!response.ok) {
@@ -947,7 +1120,6 @@ app.post('/api/list-embeds', async (req, res) => {
       });
     }
 
-    console.log(`✅ Found ${data.data.length} embeds from List All Embeds API`);
 
     // Helper function to get the proper display name for a dashboard
     const getDisplayName = (embed) => {
@@ -957,68 +1129,52 @@ app.post('/api/list-embeds', async (req, res) => {
       if (embedId !== 'dbn-demo') {
         // First try metadata.originalName (our custom field where we save the user input)
         if (embed.externalDashboard?.metadata?.originalName) {
-          console.log(`   └─ Using metadata.originalName: "${embed.externalDashboard.metadata.originalName}"`);
           return embed.externalDashboard.metadata.originalName;
         }
 
         // Then try metadata.name
         if (embed.externalDashboard?.metadata?.name) {
-          console.log(`   └─ Using metadata.name: "${embed.externalDashboard.metadata.name}"`);
           return embed.externalDashboard.metadata.name;
         }
       }
 
       // For all dashboards, try externalDashboard.name (proper API field)
       if (embed.externalDashboard?.name) {
-        console.log(`   └─ Using externalDashboard.name: "${embed.externalDashboard.name}"`);
         return embed.externalDashboard.name;
       }
 
       // Fallback to externalMetric name for metrics
       if (embed.externalMetric?.name) {
-        console.log(`   └─ Using externalMetric.name: "${embed.externalMetric.name}"`);
         return embed.externalMetric.name;
       }
 
       // Custom name mapping ONLY for the template dashboard
       if (embedId === 'dbn-demo') {
-        console.log(`   └─ Using custom mapping for dbn-demo: "Sales Analytics Dashboard"`);
         return 'Sales Analytics Dashboard';
       }
 
       // Final fallback
-      console.log(`   └─ Using final fallback: "Unnamed Dashboard"`);
       return 'Unnamed Dashboard';
     };
 
     // Helper function to determine if a dashboard should be visible to the current user
-    const isDashboardVisibleToUser = (embed, userPersona) => {
-      const embedId = embed.embedId;
+    const isDashboardVisibleToUser = (embed, currentUserId) => {
+      // Dashboards with embedIds are template/common dashboards from the Data App
+      // These are visible to everyone
+      const hasEmbedId = !!embed.embedId;
+      const hasMetadata = embed.externalDashboard?.metadata && Object.keys(embed.externalDashboard.metadata).length > 0;
 
-      // Template dashboards (like dbn-demo) are visible to everyone
-      if (embedId === 'dbn-demo') {
+      // If it has an embedId but no custom metadata, it's a template dashboard
+      if (hasEmbedId && !hasMetadata) {
         return true;
       }
 
-      // User-created dashboards should only be visible to the creator
-      // We'll use embedId to determine ownership since dashboard names might not be reliable
+      // User-created dashboards have metadata with userIdentifier (Store Name like 'Ramirez Ltd')
+      // These are visible to all users with the same Store Name
+      const creatorStoreName = embed.externalDashboard?.metadata?.userIdentifier;
 
-      // If userPersona is provided, check if this dashboard belongs to them
-      if (userPersona) {
-        const userName = userPersona.toLowerCase().replace(/\s+/g, '');
-        const embedIdLower = embedId.toLowerCase();
-
-        // Check if dashboard ID contains user identifier (e.g., "michaels-first-dashboard")
-        if (embedIdLower.includes('michael') && userName.includes('michael')) {
-          return true;
-        }
-        if (embedIdLower.includes('jake') && userName.includes('jake')) {
-          return true;
-        }
-      }
-
-      // For now, if we can't determine ownership, include it (will be filtered by guest token)
-      return false;
+      // Show if this dashboard belongs to the same Store Name
+      return creatorStoreName === currentUserId;
     };
 
     // Transform and filter embeds from the List All Embeds API
@@ -1043,12 +1199,15 @@ app.post('/api/list-embeds', async (req, res) => {
       originalData: embed
     }));
 
+    // Get currentUserId from request body for proper filtering
+    const currentUserId = req.body.userId || req.body.userPersona;
+
     // Filter embeds based on user visibility rules
     const embeds = allEmbeds.filter(embed =>
-      embed.isDashboard ? isDashboardVisibleToUser(embed.originalData, userPersona) : true
+      embed.isDashboard ? isDashboardVisibleToUser(embed.originalData, currentUserId) : true
     );
 
-    console.log(`🔍 Filtered embeds for ${userPersona}:`, {
+    console.log(`🔍 Filtered embeds for user "${currentUserId}" (client: ${clientId}):`, {
       totalEmbeds: allEmbeds.length,
       visibleEmbeds: embeds.length,
       filteredOut: allEmbeds.length - embeds.length
@@ -1057,12 +1216,9 @@ app.post('/api/list-embeds', async (req, res) => {
     // Log which dashboards are included/excluded for debugging
     allEmbeds.forEach(embed => {
       if (embed.isDashboard) {
-        const isVisible = isDashboardVisibleToUser(embed.originalData, userPersona);
-        console.log(`📊 Dashboard ${embed.embedId}: ${isVisible ? '✅ VISIBLE' : '❌ HIDDEN'} for ${userPersona}`);
-        console.log(`   └─ Display Name: "${embed.name}" (Original: "${embed.originalName}")`);
-        if (embed.originalData.externalDashboard?.metadata) {
-          console.log(`   └─ Metadata: ${JSON.stringify(embed.originalData.externalDashboard.metadata)}`);
-        }
+        const isVisible = isDashboardVisibleToUser(embed.originalData, currentUserId);
+        const creatorInfo = embed.originalData.externalDashboard?.metadata?.userIdentifier || 'unknown';
+        console.log(`   ${isVisible ? '✅' : '❌'} "${embed.name}" (created by: ${creatorInfo})`);
       }
     });
 
@@ -1099,12 +1255,41 @@ app.post('/api/list-embeds', async (req, res) => {
   }
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3002;
 
+// Start the server
 app.listen(PORT, () => {
-  const isConfigured = DATABRAIN_API_TOKEN && DATABRAIN_API_TOKEN !== 'your-databrain-api-token-here';
-  console.log(`DataBrain Demo Backend running on http://localhost:${PORT}`);
-  console.log(`API Token: ${isConfigured ? 'Configured' : 'Not configured - Set in backend/server.js line 10'}`);
+  console.log('\n╔════════════════════════════════════════════════════════════╗');
+  console.log('║         DataBrain Demo Backend Server                     ║');
+  console.log('╚════════════════════════════════════════════════════════════╝\n');
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+
+  const credentialsConfigured = DATABRAIN_API_KEY &&
+    DATABRAIN_API_KEY !== 'your-databrain-api-key-here' &&
+    DATABRAIN_API_KEY.trim() !== '';
+
+  if (credentialsConfigured) {
+    console.log('✅ DataBrain credentials: Configured');
+    console.log(`📱 Data App Name: ${dataAppName || 'Not set'}`);
+    console.log(`🌐 API Base URL: ${API_BASE_URL}`);
+    console.log(`🔑 API Key: ${DATABRAIN_API_KEY ? `${DATABRAIN_API_KEY.substring(0, 10)}...` : 'Not set'} (length: ${DATABRAIN_API_KEY?.length || 0})`);
+  } else {
+    console.log('⚠️  DataBrain credentials: Not configured');
+    console.log('\n📋 To configure, set environment variables in backend/.env:');
+    console.log('   • DATABRAIN_API_KEY=your-api-key');
+    console.log('   • DATABRAIN_DATA_APP_NAME=your-app-name');
+    console.log(`\n🔍 Debug: API_KEY value: "${DATABRAIN_API_KEY}" (type: ${typeof DATABRAIN_API_KEY})`);
+  }
+
+  console.log('\n💡 Frontend should be running on: http://localhost:5173');
+  console.log('📚 API Endpoints:');
+  console.log('   • GET  /api/config/status - Check configuration status');
+  console.log('   • POST /api/config/validate - Validate credentials');
+  console.log('   • POST /api/dashboard-guest-token - Generate guest tokens');
+  console.log('   • POST /api/v2/dashboards - List dashboards');
+  console.log('   • POST /api/v2/create-dashboard - Create dashboards');
+  console.log('   • POST /api/list-embeds - List embed configurations');
+  console.log('\n');
 });
 
 export default app; 

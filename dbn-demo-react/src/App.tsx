@@ -3,35 +3,14 @@
 import "@databrainhq/plugin/web";
 import { useState, useEffect, useCallback } from "react";
 
-// Add debugging for DataBrain component loading
-console.log('🔍 DataBrain plugin imported, checking if dbn-dashboard is available...');
-console.log('🔍 DataBrain plugin version check...');
-
 // Configure DataBrain API base URL
 // The DataBrain plugin will make direct API calls to DataBrain servers using the token from your backend
-const DATABRAIN_API_BASE_URL = "https://uat-api.usedatabrain.com"; // UAT environment
-// const DATABRAIN_API_BASE_URL = "https://api.usedatabrain.com"; // Production environment
+const DATABRAIN_API_BASE_URL = "http://localhost:3000"; // Local DataBrain platform backend
 
 // Set global DataBrain configuration
 if (typeof window !== 'undefined') {
   window.dbn = window.dbn || {};
   window.dbn.baseUrl = DATABRAIN_API_BASE_URL;
-  console.log('🔧 DataBrain baseUrl configured:', window.dbn.baseUrl);
-}
-
-if (typeof customElements !== 'undefined') {
-  console.log('✅ Custom elements supported');
-  setTimeout(() => {
-    const isDefined = customElements.get('dbn-dashboard');
-    console.log('🎯 dbn-dashboard custom element defined:', !!isDefined);
-    if (isDefined) {
-      console.log('✅ DataBrain component is ready to use');
-    } else {
-      console.error('❌ DataBrain component not found - check plugin import');
-    }
-  }, 1000);
-} else {
-  console.log('❌ Custom elements not supported');
 }
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,7 +28,9 @@ import Reports from "./components/Reports";
 import CreateDashboard from "./components/CreateDashboard";
 import DashboardSelector from "./components/DashboardSelector";
 import UserSwitcher from "./components/UserSwitcher";
-import { User, USERS } from "./types/user";
+import TenantSwitcher from "./components/TenantSwitcher";
+import Settings from "./components/Settings";
+import { User, Tenant, getUsersByTenant } from "./types/user";
 
 declare global {
   namespace JSX {
@@ -66,7 +47,7 @@ declare global {
 }
 
 const CONFIG = {
-  clientId: "101", // Top-level tenant ID (all users belong to client 101)
+  defaultTenantId: "101", // Default tenant ID
   dashboardId: "dbn-demo", // Default dashboard
   dashboardName: "Demo Dashboard" // Default dashboard name
 };
@@ -78,13 +59,17 @@ function App() {
   const urlClientId = url.searchParams.get("clientId") || "";
   const urlDashboardName = url.searchParams.get("dashboardName") || "";
 
-  // Initialize user based on URL parameter or default to first user
-  const urlUser = url.searchParams.get("user");
-  const initialUser = urlUser ? USERS.find(u => u.id === urlUser) || USERS[0] : USERS[0];
-  const [currentUser, setCurrentUser] = useState<User>(initialUser);
-  const [userIdInput, setUserIdInput] = useState<string>(initialUser.id);
+  // Initialize tenant and user based on URL parameters
+  const urlTenant = url.searchParams.get("tenant");
+  const initialTenantId = urlTenant || urlClientId || CONFIG.defaultTenantId;
+  const [currentTenantId, setCurrentTenantId] = useState<string>(initialTenantId);
 
-  const clientId = urlClientId || CONFIG.clientId; // Use tenant ID (101) - shared across users
+  const urlUser = url.searchParams.get("user");
+  const tenantUsers = getUsersByTenant(currentTenantId);
+  const initialUser = urlUser ? tenantUsers.find(u => u.id === urlUser) || tenantUsers[0] : tenantUsers[0];
+  const [currentUser, setCurrentUser] = useState<User>(initialUser);
+
+  const clientId = currentTenantId; // Use current tenant ID
   const [currentDashboardId, setCurrentDashboardId] = useState(urlDashboardId || CONFIG.dashboardId);
   const [, setCurrentDashboardName] = useState(urlDashboardName || CONFIG.dashboardName);
   const dashboardId = currentDashboardId;
@@ -101,13 +86,6 @@ function App() {
 
   const fetchGuestTokenForDashboards = useCallback(async (dashboardIds: string[], clientId: string, customerId?: string) => {
     try {
-      console.log('🔄 Fetching guest token for multiple dashboards:', {
-        dashboardIds,
-        clientId,
-        customerId,
-        userPersona: currentUser.name
-      });
-
       const requestBody = {
         clientId: clientId,
         ...(customerId && { customerId: customerId }),
@@ -115,9 +93,7 @@ function App() {
         userPersona: currentUser.name
       };
 
-      console.log('🎯 Guest token request with multiple dashboard app filters:', requestBody);
-
-      const response = await fetch('http://localhost:3001/api/dashboard-guest-token', {
+      const response = await fetch('http://localhost:3002/api/dashboard-guest-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
@@ -125,13 +101,6 @@ function App() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Guest token received for multiple dashboards:', {
-          dashboardIds,
-          token: data.guestToken ? `${data.guestToken.substring(0, 20)}...` : 'No token',
-          customerId: customerId,
-          userPersona: currentUser.name,
-          hasFiltering: !!(customerId && dashboardIds.length > 0)
-        });
 
         if (data.guestToken) {
           // Cache the same token for all dashboards since it works for multiple
@@ -147,13 +116,6 @@ function App() {
 
           // Set as current token
           setToken(data.guestToken);
-
-          console.log('🎯 Dashboard app filters applied for multiple dashboards:', {
-            filterName: 'Customer App filter',
-            customerValue: customerId,
-            dashboardIds: dashboardIds,
-            dashboardCount: dashboardIds.length
-          });
         }
 
         setError(null);
@@ -171,7 +133,7 @@ function App() {
         return null;
       }
     } catch (error) {
-      setError('Failed to connect to backend. Make sure the server is running on http://localhost:3001');
+      setError('Failed to connect to backend. Make sure the server is running on http://localhost:3002');
       return null;
     }
   }, [currentUser.name]);
@@ -184,7 +146,6 @@ function App() {
       }
 
       // STEP 1: Create initial guest token with customer context FIRST
-      console.log('🔐 Step 1: Creating initial guest token with customer context...');
       setIsLoading(true);
       fetchGuestTokenForDashboards([], clientId, currentUser.customerId).finally(() => {
         setIsLoading(false);
@@ -192,12 +153,36 @@ function App() {
     }
   }, [clientId, urlToken, currentUser.customerId, fetchGuestTokenForDashboards]);
 
-  const handleUserChange = (user: User) => {
-    console.log('👤 User switching to:', user.name, '- Following exact same API flow as login');
+  const handleTenantChange = (tenant: Tenant) => {
+    // Update tenant and switch to first user of new tenant
+    setCurrentTenantId(tenant.id);
+    const newTenantUsers = getUsersByTenant(tenant.id);
+    const newUser = newTenantUsers[0];
 
+    setCurrentUser(newUser);
+    setSuccessMessage(`Switched to ${tenant.name} - Loading ${newUser.name}'s data...`);
+
+    // Clear all cached tokens and state when switching tenants
+    setDashboardTokens({});
+    setToken('');
+    setAvailableDashboards([]);
+    setActiveDashboardTab('');
+
+    // Update URL to reflect current tenant and user
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('tenant', tenant.id);
+    currentUrl.searchParams.set('user', newUser.id);
+    window.history.replaceState({}, '', currentUrl.toString());
+
+    // Force refresh of dashboard selector to get new tenant's dashboards
+    setDashboardSelectorKey(prev => prev + 1);
+
+    setTimeout(() => { setSuccessMessage(null); }, 3000);
+  };
+
+  const handleUserChange = (user: User) => {
     // Update current user and clear all cached state
     setCurrentUser(user);
-    setUserIdInput(user.id);
     setSuccessMessage(`Switched to ${user.name} (${user.role}) - Refreshing data...`);
 
     // Clear all cached tokens and state when switching users
@@ -217,18 +202,9 @@ function App() {
     setTimeout(() => { setSuccessMessage(null); }, 3000);
   };
 
-  const handleUserIdInputChange = (userId: string) => {
-    const user = USERS.find(u => u.id === userId);
-    if (user) {
-      handleUserChange(user);
-    } else {
-      console.warn('User not found:', userId);
-    }
-  };
 
 
   const handleDashboardsLoaded = (dashboards: Array<{ embedId: string; name: string; embedType: string; metadata: any; isDashboard: boolean; isMetric: boolean }>) => {
-    console.log('📊 Step 2: Dashboards loaded with customer filtering applied:', dashboards);
     setAvailableDashboards(dashboards);
 
     // Set the first dashboard as active if none is selected
@@ -239,12 +215,10 @@ function App() {
     }
 
     // STEP 3: Update guest token to include specific dashboard filters (optional optimization)
-    console.log('🎯 Step 3: Updating token with specific dashboard filters...');
     const dashboardsOnly = dashboards.filter(d => d.isDashboard);
     const dashboardIds = dashboardsOnly.map(d => d.embedId);
 
     if (dashboardIds.length > 0) {
-      console.log(`🔄 Updating token for ${dashboardIds.length} specific dashboards:`, dashboardIds);
       setIsLoading(true);
       fetchGuestTokenForDashboards(dashboardIds, clientId, currentUser.customerId).finally(() => {
         setIsLoading(false);
@@ -253,8 +227,6 @@ function App() {
   };
 
   const handleDashboardCreated = (dashboard: { dashboardId: string; embedId: string; dashboardName: string; description?: string }) => {
-    console.log('🎯 New dashboard created - immediately focusing and rendering:', dashboard);
-
     setSuccessMessage(`Dashboard "${dashboard.dashboardName}" created successfully! Loading dashboard...`);
 
     // Immediately set the new dashboard as active
@@ -275,19 +247,13 @@ function App() {
       isMetric: false
     };
 
-    setAvailableDashboards(prev => {
-      const updated = [...prev, newDashboard];
-      console.log('📊 Updated available dashboards:', updated.map(d => ({ embedId: d.embedId, name: d.name })));
-      return updated;
-    });
+    setAvailableDashboards(prev => [...prev, newDashboard]);
 
     // Immediately fetch token for all dashboards including the new one
     const allDashboardIds = [...availableDashboards.filter(d => d.isDashboard).map(d => d.embedId), dashboard.embedId];
-    console.log('🔄 Fetching token for all dashboards including new one:', allDashboardIds);
 
     setIsLoading(true);
     fetchGuestTokenForDashboards(allDashboardIds, clientId, currentUser.customerId).then(() => {
-      console.log('✅ Token updated - new dashboard should now be rendered');
       setSuccessMessage(`Dashboard "${dashboard.dashboardName}" is now active!`);
       setTimeout(() => { setSuccessMessage(null); }, 2000);
     }).catch((error) => {
@@ -312,7 +278,6 @@ function App() {
   };
 
   const handleDashboardTabChange = (embedId: string) => {
-    console.log('🎯 Dashboard tab changed to:', embedId);
     setActiveDashboardTab(embedId);
 
     // Handle create tab separately
@@ -323,8 +288,6 @@ function App() {
     // Find the dashboard and update state
     const selectedDashboard = availableDashboards.find(d => d.embedId === embedId);
     if (selectedDashboard) {
-      console.log('⚡ Instant dashboard switch to:', selectedDashboard.name);
-
       // Update dashboard ID immediately for instant UI response
       setCurrentDashboardId(embedId);
       setCurrentDashboardName(selectedDashboard.name);
@@ -332,10 +295,8 @@ function App() {
       // Check if we have a cached token for this dashboard
       const cachedToken = dashboardTokens[embedId];
       if (cachedToken) {
-        console.log('🚀 Using cached multi-dashboard token for instant switch');
         setToken(cachedToken);
       } else {
-        console.log('⚠️ No cached token found - this should not happen with multi-dashboard tokens');
         // Fallback: create token for all dashboards again
         const dashboardIds = availableDashboards.filter(d => d.isDashboard).map(d => d.embedId);
         fetchGuestTokenForDashboards(dashboardIds, clientId, currentUser.customerId);
@@ -344,8 +305,6 @@ function App() {
   };
 
   const handleDashboardSelect = async (embedId: string, dashboardName: string) => {
-    console.log('🎯 Dashboard selected from selector:', { embedId, dashboardName });
-
     // Update UI immediately
     setCurrentDashboardId(embedId);
     setCurrentDashboardName(dashboardName);
@@ -354,15 +313,11 @@ function App() {
     // Check for cached token first
     const cachedToken = dashboardTokens[embedId];
     if (cachedToken) {
-      console.log('🚀 Using cached multi-dashboard token for dashboard selection');
       setToken(cachedToken);
     } else {
-      console.log('🔄 Creating token for all dashboards');
       const dashboardIds = availableDashboards.filter(d => d.isDashboard).map(d => d.embedId);
       await fetchGuestTokenForDashboards(dashboardIds, clientId, currentUser.customerId);
     }
-
-    console.log('ℹ️ Dashboard selection complete');
   };
 
   const hasRequiredConfig = token && clientId && dashboardId;
@@ -405,44 +360,27 @@ function App() {
             <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center text-primary-foreground font-semibold text-sm">
               DB
             </div>
-            <span className="text-slate-100 font-semibold text-lg">Acme Corp</span>
+            <span className="text-slate-100 font-semibold text-lg">DataBrain Demo</span>
           </div>
 
-          {/* Quick User ID Input */}
-          <div className="mb-4 p-3 bg-slate-800 rounded-lg border border-slate-700">
-            <label className="block text-slate-300 text-xs font-medium mb-2">
-              Quick User Switch
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={userIdInput}
-                onChange={(e) => setUserIdInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleUserIdInputChange(userIdInput);
-                  }
-                }}
-                placeholder="michael, jake"
-                className="flex-1 px-2 py-1 text-xs bg-slate-700 border border-slate-600 rounded text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-              />
-              <button
-                onClick={() => handleUserIdInputChange(userIdInput)}
-                className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                Go
-              </button>
-            </div>
-            <div className="mt-1 text-xs text-slate-400">
-              Current: {currentUser.name} ({currentUser.id})
-            </div>
+          {/* Tenant Section */}
+          <div className="mb-4">
+            <label className="text-xs text-slate-400 mb-2 block uppercase tracking-wide">Tenant</label>
+            <TenantSwitcher
+              currentTenantId={currentTenantId}
+              onTenantChange={handleTenantChange}
+            />
           </div>
 
           {/* User Section */}
-          <UserSwitcher
-            currentUser={currentUser}
-            onUserChange={handleUserChange}
-          />
+          <div>
+            <label className="text-xs text-slate-400 mb-2 block uppercase tracking-wide">User</label>
+            <UserSwitcher
+              currentUser={currentUser}
+              onUserChange={handleUserChange}
+              tenantId={currentTenantId}
+            />
+          </div>
         </div>
 
         {/* Sidebar Navigation */}
@@ -458,7 +396,6 @@ function App() {
                 className="w-full justify-start text-slate-300 hover:text-slate-100"
                 onClick={() => setActiveNavItem('analytics')}
               >
-                <span className="mr-3">📊</span>
                 Dashboard
               </Button>
               <Button
@@ -466,7 +403,6 @@ function App() {
                 className="w-full justify-start text-slate-300 hover:text-slate-100"
                 onClick={() => setActiveNavItem('reports')}
               >
-                <span className="mr-3">📈</span>
                 Reports
               </Button>
             </div>
@@ -479,11 +415,9 @@ function App() {
             </h3>
             <div className="space-y-1">
               <Button variant="ghost" className="w-full justify-start text-slate-300 hover:text-slate-100">
-                <span className="mr-3">👥</span>
                 Users
               </Button>
               <Button variant="ghost" className="w-full justify-start text-slate-300 hover:text-slate-100">
-                <span className="mr-3">🔗</span>
                 Integrations
               </Button>
             </div>
@@ -496,11 +430,13 @@ function App() {
             </h3>
             <div className="space-y-1">
               <Button variant="ghost" className="w-full justify-start text-slate-300 hover:text-slate-100">
-                <span className="mr-3">📊</span>
                 Monitoring
               </Button>
-              <Button variant="ghost" className="w-full justify-start text-slate-300 hover:text-slate-100">
-                <span className="mr-3">⚙️</span>
+              <Button
+                variant={activeNavItem === 'settings' ? 'default' : 'ghost'}
+                className="w-full justify-start text-slate-300 hover:text-slate-100"
+                onClick={() => setActiveNavItem('settings')}
+              >
                 Settings
               </Button>
             </div>
@@ -511,7 +447,9 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 ml-80 bg-background">
         <main className="p-6 min-h-screen">
-          {activeNavItem === 'reports' ? (
+          {activeNavItem === 'settings' ? (
+            <Settings />
+          ) : activeNavItem === 'reports' ? (
             <Reports
               embedId={dashboardId}
               clientId={clientId}
@@ -523,11 +461,21 @@ function App() {
                 <Tabs value={activeDashboardTab} onValueChange={handleDashboardTabChange}>
                   <div className="flex items-center justify-between mb-4">
                     <TabsList>
-                      {availableDashboards.map((dashboard) => (
-                        <TabsTrigger key={dashboard.embedId} value={dashboard.embedId}>
-                          {dashboard.name}
-                        </TabsTrigger>
-                      ))}
+                      {availableDashboards.map((dashboard) => {
+                        const isPrivate = dashboard.metadata?.isPrivate === true || dashboard.metadata?.visibility === 'private';
+                        return (
+                          <TabsTrigger key={dashboard.embedId} value={dashboard.embedId}>
+                            <span className="flex items-center gap-2">
+                              {dashboard.name}
+                              {isPrivate && (
+                                <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                                  🔒 Private
+                                </Badge>
+                              )}
+                            </span>
+                          </TabsTrigger>
+                        );
+                      })}
                       <TabsTrigger value="create">
                         + Create New
                       </TabsTrigger>
@@ -602,67 +550,51 @@ function App() {
                   </div>
 
                   {/* Dashboard Content */}
-                  {availableDashboards.map((dashboard) => (
-                    <TabsContent key={dashboard.embedId} value={dashboard.embedId}>
-                      {isLoading && (
-                        <div className="flex flex-col items-center justify-center py-12">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-                          <p className="text-muted-foreground">Loading ecommerce analytics...</p>
-                        </div>
-                      )}
-
-                      {token && clientId && currentDashboardId === dashboard.embedId ? (
-                        <div className="border rounded-lg bg-white min-h-[400px]">
-                          {/* Dashboard Header with Name */}
-                          <div className="border-b bg-slate-50 px-6 py-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h1 className="text-xl font-semibold text-slate-900">{dashboard.name}</h1>
-                                <p className="text-sm text-slate-600 mt-1">
-                                  Dashboard for {currentUser.name} ({currentUser.role})
-                                </p>
-                              </div>
-                              <div className="text-xs text-slate-500">
-                                ID: {dashboard.embedId}
-                              </div>
-                            </div>
+                  {availableDashboards.map((dashboard) => {
+                    const dashboardToken = dashboardTokens[dashboard.embedId];
+                    const hasValidToken = !!dashboardToken && !!clientId;
+                    return (
+                      <TabsContent key={dashboard.embedId} value={dashboard.embedId}>
+                        {isLoading && !hasValidToken && (
+                          <div className="flex flex-col items-center justify-center py-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+                            <p className="text-muted-foreground">Loading ecommerce analytics...</p>
                           </div>
+                        )}
 
-                          {/* Dashboard Content */}
-                          <div className="p-4">
-                            {token ? (
+                        {hasValidToken ? (
+                          <div className="border rounded-lg bg-white min-h-[400px]">
+                            <div className="p-4">
                               <dbn-dashboard
-                                token={token}
+                                token={dashboardToken}
                                 dashboard-id={dashboard.embedId}
+                                options={JSON.stringify({
+                                  disableScheduleEmailReports: false
+                                })}
                               />
-                            ) : (
-                              <div className="flex items-center justify-center h-32 text-muted-foreground">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-3"></div>
-                                <span>Waiting for valid token...</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <Card>
-                          <CardContent className="text-center py-12">
-                            <p className="text-muted-foreground mb-4">Loading dashboard configuration...</p>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex items-center justify-center gap-2">
-                                Token: <Badge variant={token ? "default" : "secondary"}>{token ? '✅ Available' : '❌ Missing'}</Badge>
-                              </div>
-                              <div className="flex items-center justify-center gap-2">
-                                Client ID: <Badge variant={clientId ? "default" : "secondary"}>{clientId ? '✅ Available' : '❌ Missing'}</Badge>
-                              </div>
-                              <div className="flex items-center justify-center gap-2">
-                                Dashboard ID: <Badge variant={dashboard.embedId ? "default" : "secondary"}>{dashboard.embedId ? '✅ Available' : '❌ Missing'}</Badge>
-                              </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </TabsContent>
-                  ))}
+                          </div>
+                        ) : !isLoading ? (
+                          <Card>
+                            <CardContent className="text-center py-12">
+                              <p className="text-muted-foreground mb-4">Loading dashboard configuration...</p>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex items-center justify-center gap-2">
+                                  Token: <Badge variant={dashboardToken ? "default" : "secondary"}>{dashboardToken ? '✅ Available' : '❌ Missing'}</Badge>
+                                </div>
+                                <div className="flex items-center justify-center gap-2">
+                                  Client ID: <Badge variant={clientId ? "default" : "secondary"}>{clientId ? '✅ Available' : '❌ Missing'}</Badge>
+                                </div>
+                                <div className="flex items-center justify-center gap-2">
+                                  Dashboard ID: <Badge variant={dashboard.embedId ? "default" : "secondary"}>{dashboard.embedId ? '✅ Available' : '❌ Missing'}</Badge>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ) : null}
+                      </TabsContent>
+                    );
+                  })}
 
                   {/* Create New Dashboard Tab */}
                   <TabsContent value="create">
@@ -672,6 +604,7 @@ function App() {
                         onClose={handleCloseCreateDashboard}
                         onSuccess={handleDashboardCreated}
                         clientId={clientId}
+                        userIdentifier={currentUser.storeName}
                         inline={true}
                       />
                     </div>
@@ -689,6 +622,7 @@ function App() {
                     onCreateNew={() => setActiveDashboardTab('create')}
                     embedId={dashboardId}
                     autoSelectFirst={false}
+                    currentUser={currentUser}
                     debugInfo={{
                       token,
                       currentUser,

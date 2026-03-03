@@ -48,10 +48,9 @@ const DashboardActions: React.FC<DashboardActionsProps> = ({
     if (!saveAsName.trim()) return;
 
     try {
-      console.log('🚀 Creating dashboard copy with DataBrain API...');
 
       // Call real DataBrain v2 API to copy dashboard
-      const response = await fetch('http://localhost:3001/api/v2/copy-dashboard', {
+      const response = await fetch('http://localhost:3002/api/v2/copy-dashboard', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -66,7 +65,6 @@ const DashboardActions: React.FC<DashboardActionsProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Dashboard copied successfully with DataBrain API:', data);
 
         onSaveAs(saveAsName.trim(), saveAsDescription.trim(), data);
         setShowSaveAsModal(false);
@@ -91,7 +89,7 @@ const DashboardActions: React.FC<DashboardActionsProps> = ({
 
     // Call custom publishing API (v2 for consistency)
     try {
-      const response = await fetch('http://localhost:3001/api/v2/publish-dashboard', {
+      const response = await fetch('http://localhost:3002/api/v2/publish-dashboard', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -105,7 +103,6 @@ const DashboardActions: React.FC<DashboardActionsProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Dashboard published successfully:', data);
         onPublish(target);
       } else {
         const errorData = await response.json();

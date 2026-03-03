@@ -1,208 +1,232 @@
-# DataBrain React Demo - Customizability Showcase
+# DataBrain React Demo
 
-A comprehensive React application demonstrating DataBrain's advanced customizability features through a realistic A360 (Automation 360) scenario. This demo showcases permission-based UI, custom widget creation, dashboard publishing, and user role management.
+A demonstration React application showcasing DataBrain's embedded analytics capabilities with multi-tenancy, role-based permissions, and customizable dashboards.
 
-## 🌟 New Demo Features
+![DataBrain Demo](https://img.shields.io/badge/DataBrain-Demo-blue?style=for-the-badge)
+![React](https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react)
+![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?style=for-the-badge&logo=node.js)
 
-### 👥 User Personas & Permissions
-- **Michael Thompson** (Process Owner) & **Jake Rodriguez** (Automation Admin)
-- **User Switching** - Easy persona switching for demos
-- **Permission Gates** - UI elements appear/disappear based on user permissions
+> **Note:** This is a demo repository for testing and learning. Not intended for production deployment.
 
-### 🎨 Custom Widget Creation
-- **Multi-step Wizard** - Data selection → Chart type → Configuration → Preview
-- **10+ Chart Types** - Bar, Line, Pie, Gauge, KPI, Heatmap, and more
-- **Privacy by Default** - Widgets are private until dashboard is published
+---
 
-### 📊 Dashboard Management  
-- **Save As Feature** - Create dashboard copies (e.g., "Overview_Finance")
-- **Publishing System** - Publish to All users, Specific roles, or Specific users
-- **OOTB Protection** - System dashboards protected, custom ones manageable
+## ✨ Features
 
-### 🔐 Security & Governance
-- **Role-based Access Control** - Granular permissions per user
-- **Content Separation** - Clear OOTB vs custom content distinction
-- **Data Access Control** - Users only see permitted data sources
+- **🚀 Easy Setup** - Three configuration options (CLI, UI, .env file)
+- **🔐 Secure** - Guest token authentication with DataBrain API
+- **👥 Multi-Tenancy** - Switch between tenants and users
+- **📊 Dashboard Management** - Create, view, and customize dashboards
+- **🎨 Custom Widgets** - Build visualizations with ease
+- **🔑 Role-Based Permissions** - Different access levels per user
+- **📈 Reports & Analytics** - Comprehensive reporting features
 
-## 📖 Demo Guide
-See [DEMO_GUIDE.md](./DEMO_GUIDE.md) for complete demo script and usage instructions.
+---
 
 ## 🚀 Quick Start
 
-### 1. Install Dependencies
+### Prerequisites
 
-**Frontend (React app):**
+- **Node.js v16+** - [Download](https://nodejs.org/)
+- **DataBrain Account** - [Sign up free](https://app.usedatabrain.com/users/sign-up)
+
+### 1. Set Up DataBrain
+
+1. Create a **Workspace** and connect your data source
+2. Create a **Dashboard** with visualizations
+3. Create a **Data App** to get your API token
+
+📖 **Detailed guide:** [Production-Ready Embedding](https://docs.usedatabrain.com/developer-docs/embedding-setup/step-by-step-guide)
+
+### 2. Install & Configure
+
 ```bash
-npm install
+# Clone repository
+git clone https://github.com/databrainhq/dbn-demo-react.git
+cd dbn-demo-react
+
+# Run setup script
+chmod +x setup.sh
+./setup.sh
+
+# Configure credentials (choose one method)
+# Option A: Interactive CLI (when you start backend)
+# Option B: Settings UI (in the app)
+# Option C: Edit backend/.env file
 ```
 
-**Backend (Node.js server):**
-```bash
-cd backend
-npm install
-```
-
-### 2. Configure DataBrain API Token
-
-Set your DataBrain API token as an environment variable:
+### 3. Run the Demo
 
 ```bash
-export DATABRAIN_API_TOKEN=your-actual-api-token-here
-```
-
-### 3. Start the Backend Server
-
-```bash
+# Terminal 1 - Backend
 cd backend
 npm start
-```
 
-### 4. Start the React App
-
-In a new terminal:
-```bash
+# Terminal 2 - Frontend
 npm run dev
+
+# Open browser
+# http://localhost:5173
 ```
 
-## 🔧 How It Works
+---
 
-### Backend Generation (Recommended)
-1. **Dashboard Request**: User enters client ID and dashboard ID from their DataBrain app
-2. **Backend Token Generation**: Backend generates guest token using the provided client ID
-3. **Dashboard Display**: React app displays dashboard with generated token
+## 📚 Documentation
 
-### Manual Entry (Testing)
-- Manual entry of guest token, client ID, and dashboard ID
-- Use the provided shell scripts to generate test tokens
+- **[CONFIGURATION.md](CONFIGURATION.md)** - Simple setup checklist
+- **[QUICK_START.md](QUICK_START.md)** - Complete walkthrough with troubleshooting
+- **[docs/API.md](docs/API.md)** - Backend API reference
+- **[docs/DEVELOPER.md](docs/DEVELOPER.md)** - Advanced customization guide
 
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   React App     │    │  Node.js API    │    │  DataBrain API  │
-│  (Frontend)     │───▶│   (Backend)     │───▶│   (External)    │
-│                 │    │                 │    │                 │
-│ - Dashboard UI  │    │ - Token Gen     │    │ - Guest Tokens  │
-│ - Config Forms  │    │ - API Calls     │    │ - Dashboards    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-## 🔐 Security Features
-
-- **No Frontend API Tokens**: API tokens never exposed to frontend
-- **Unique Client IDs**: Generated per request
-- **CORS Protection**: Backend properly configured for security
-- **Error Handling**: Comprehensive error handling and logging
+---
 
 ## 📁 Project Structure
 
 ```
 dbn-demo-react/
 ├── src/
-│   ├── App.tsx          # React app with dual mode support
-│   ├── App.css          # Professional styling
-│   └── main.tsx         # React entry point
+│   ├── App.tsx                    # Main application
+│   ├── components/                # React components
+│   ├── types/                     # TypeScript types
+│   └── lib/                       # Utilities
 ├── backend/
-│   ├── server.js        # Express server with guest token API
-│   └── package.json     # Backend dependencies
-├── public/
-├── package.json         # Frontend dependencies
-└── README.md           # This file
+│   ├── server.js                  # Express API server
+│   ├── package.json               # Backend dependencies
+│   └── .env                       # Configuration (create from env.example)
+├── docs/                          # Developer documentation
+├── CONFIGURATION.md               # Setup checklist
+├── QUICK_START.md                 # Complete guide
+└── README.md                      # This file
 ```
-
-## 🛠️ Backend API Endpoints
-
-### `POST /api/guest-token`
-Generates guest tokens for dashboard access using your DataBrain client ID.
-
-**Headers:**
-```
-Content-Type: application/json
-```
-
-**Body:**
-```json
-{
-  "clientId": "your-databrain-client-id",
-  "dashboardId": "your-dashboard-id"
-}
-```
-
-**Response:**
-```json
-{
-  "guestToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "clientId": "your-databrain-client-id",
-  "dashboardId": "your-dashboard-id"
-}
-```
-
-## 🧪 Testing with Shell Scripts
-
-For manual entry testing, use the provided scripts:
-
-```bash
-# Interactive script
-./generate_guest_token.sh
-
-# Quick command-line script  
-./quick_token.sh YOUR_API_TOKEN YOUR_CLIENT_ID
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-- `DATABRAIN_API_TOKEN`: Your DataBrain API token (required)
-- `PORT`: Backend server port (default: 3001)
-
-### DataBrain Setup
-
-1. Get your API token from DataBrain dashboard
-2. Create a data app in DataBrain
-3. Get your client ID from your DataBrain app configuration
-4. Get your dashboard ID (embed ID)
-5. Configure the `data_app_name` in `backend/server.js`
-
-## 🚨 Troubleshooting
-
-**Backend Issues:**
-- **"API Token: ❌ Not configured"**: Set the `DATABRAIN_API_TOKEN` environment variable
-- **"Failed to connect to backend"**: Make sure backend is running on port 3001
-- **"INVALID_REQUEST_BODY"**: Check that `data_app_name` matches your DataBrain setup
-
-**Frontend Issues:**
-- **"INVALID_TOKEN"**: Token may be expired or invalid
-- **Dashboard not loading**: Check browser console for detailed errors
-
-## 📚 Next Steps
-
-1. **Production Deployment**: 
-   - Add authentication (JWT, OAuth, etc.)
-   - Add database for user management
-   - Implement proper session management
-   - Add HTTPS and security headers
-
-2. **Enhanced Features**:
-   - Token caching for performance
-   - User permission checks
-   - Dashboard access controls
-   - Audit logging
-
-3. **Scale Considerations**:
-   - Rate limiting on token generation
-   - Load balancing for multiple backend instances
-   - Redis for session storage
-   - Database connection pooling
-
-## 🔗 Resources
-
-- [DataBrain Documentation](https://docs.usedatabrain.com)
-- [Official Embedding Guide](https://docs.usedatabrain.com/developer-docs/how-to-embed)
-- [DataBrain Plugin NPM](https://www.npmjs.com/package/@databrainhq/plugin)
-- [React Documentation](https://react.dev)
-- [Express.js Documentation](https://expressjs.com)
 
 ---
 
-**Note:** This is a demo application. For production use, implement proper authentication, error handling, and security measures according to your requirements. 
+## 🎯 What This Demo Shows
+
+### Guest Token Authentication
+Learn how to generate secure guest tokens for embedded dashboard access.
+
+### Multi-Tenant Architecture  
+See how to implement multi-tenancy with different users and data isolation.
+
+### Dashboard Management
+Explore creating, listing, and managing dashboards via API.
+
+### Configuration Flexibility
+Test different configuration methods (UI, CLI, environment variables).
+
+---
+
+## 🔧 Configuration
+
+### Required Environment Variables
+
+```bash
+DATABRAIN_API_KEY=your-api-token-from-data-app
+DATABRAIN_DATA_APP_NAME=your-data-app-name
+```
+
+### Optional (Have Defaults)
+
+```bash
+DATABRAIN_API_BASE_URL=https://api.usedatabrain.com
+DATABRAIN_WORKSPACE_NAME=Demo Workspace
+```
+
+**⚠️ Important:** API Token comes from your **Data App**, not from Settings.
+
+---
+
+## 🆘 Troubleshooting
+
+### Common Issues
+
+**"Failed to connect to backend"**
+- Ensure backend is running on port 3001
+- Check `http://localhost:3001/api/config/status`
+
+**"INVALID_TOKEN" error**
+- Verify API Token is from your Data App
+- Check for typos or extra spaces
+- Ensure Data App Name matches exactly (case-sensitive)
+
+**Dashboard doesn't load**
+- Demo expects dashboard ID: `chat-mode-dash`
+- Create one with this ID, or update `src/App.tsx:51`
+- Or let the app auto-detect your first dashboard
+
+📖 **Full troubleshooting:** See [QUICK_START.md](QUICK_START.md#troubleshooting)
+
+---
+
+## 🔐 Security Best Practices
+
+> **Important:** This is a demo. Never commit API tokens to version control.
+
+- Use `.env` files for sensitive data
+- Keep your API tokens secure
+- The `.env` file is already in `.gitignore`
+- For production, use environment variables or secrets management
+
+---
+
+## 📖 Additional Resources
+
+- **DataBrain Docs:** [docs.usedatabrain.com](https://docs.usedatabrain.com)
+- **Guest Token API:** [Token API Reference](https://docs.usedatabrain.com/developer-docs/helpers/api-reference/token)
+- **Embedding Guide:** [How to Embed](https://docs.usedatabrain.com/developer-docs/how-to-embed)
+- **DataBrain Plugin:** [NPM Package](https://www.npmjs.com/package/@databrainhq/plugin)
+
+---
+
+## 🎨 Customization
+
+Want to adapt this demo for your use case?
+
+- **User/Tenant Data:** Edit `src/types/user.ts`
+- **Dashboard IDs:** Update `src/App.tsx` config
+- **Backend URLs:** See [docs/DEVELOPER.md](docs/DEVELOPER.md)
+- **Permissions:** Modify permission structure in `src/types/user.ts`
+
+---
+
+## 📋 Demo Data
+
+This demo includes sample data for testing:
+
+- **5 Tenants** - Client 101-105
+- **20 Store Managers** - 4 per tenant
+- **3 OOTB Dashboards** - Overview, Stores, Analytics
+
+All demo users have similar permissions to showcase the multi-tenancy features.
+
+---
+
+## 🤝 Getting Help
+
+- **📖 Documentation:** [docs.usedatabrain.com](https://docs.usedatabrain.com)
+- **💬 Community:** [DataBrain Community](https://community.usedatabrain.com)
+- **📧 Email:** support@usedatabrain.com
+- **🐛 Issues:** [GitHub Issues](https://github.com/databrainhq/dbn-demo-react/issues)
+
+---
+
+## 📄 License
+
+MIT License - feel free to use this code as a reference for your own projects.
+
+---
+
+## 🎉 About This Demo
+
+This demonstration repository showcases DataBrain's API integration patterns. Use it to:
+
+- ✅ Learn how DataBrain APIs work
+- ✅ Test integration patterns
+- ✅ Explore embedding features
+- ✅ Understand multi-tenancy
+
+**This is not a production-ready application.** Use it as a reference for building your own integration.
+
+---
+
+**Made with ❤️ using [DataBrain](https://www.usedatabrain.com/)**

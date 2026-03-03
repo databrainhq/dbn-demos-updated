@@ -11,15 +11,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Check } from "lucide-react";
-import { User, USERS } from '../types/user';
+import { User, getUsersByTenant } from '../types/user';
 
 interface UserSwitcherProps {
   currentUser: User;
   onUserChange: (user: User) => void;
+  tenantId: string;
 }
 
-const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onUserChange }) => {
+const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onUserChange, tenantId }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const users = getUsersByTenant(tenantId);
 
   const handleUserSelect = (user: User) => {
     onUserChange(user);
@@ -42,9 +44,9 @@ const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onUserChange }
               {currentUser.avatar || getInitials(currentUser.name)}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 text-left">
-            <div className="font-medium text-sm">{currentUser.name}</div>
-            <div className="text-xs text-slate-400">{currentUser.role}</div>
+          <div className="flex-1 text-left min-w-0">
+            <div className="font-medium text-sm truncate">{currentUser.name}</div>
+            <div className="text-xs text-slate-400 truncate">{currentUser.role}</div>
           </div>
           <ChevronDown className="h-4 w-4 text-slate-400" />
         </Button>
@@ -61,7 +63,7 @@ const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onUserChange }
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-slate-200" />
 
-        {USERS.map(user => (
+        {users.map(user => (
           <DropdownMenuItem
             key={user.id}
             onClick={() => handleUserSelect(user)}
@@ -73,9 +75,9 @@ const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onUserChange }
                   {user.avatar || getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
-                <div className="font-medium text-sm">{user.name}</div>
-                <div className="text-xs text-muted-foreground">{user.role}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm truncate">{user.name}</div>
+                <div className="text-xs text-muted-foreground truncate">{user.role}</div>
                 <div className="text-xs text-muted-foreground">
                   <Badge variant="secondary" className="text-xs">
                     {user.permissions.filter(p => p.enabled).length} permissions

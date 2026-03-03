@@ -51,9 +51,8 @@ const Reports: React.FC<ReportsProps> = ({ embedId, clientId }) => {
     setError(null);
 
     try {
-      console.log('🔍 Fetching metrics for dashboard:', { embedId, clientId });
 
-      const response = await fetch('http://localhost:3001/api/v2/dashboard-metrics', {
+      const response = await fetch('http://localhost:3002/api/v2/dashboard-metrics', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -66,7 +65,6 @@ const Reports: React.FC<ReportsProps> = ({ embedId, clientId }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Metrics fetched successfully:', data);
 
         if (data.metrics && Array.isArray(data.metrics)) {
           setMetrics(data.metrics);
@@ -81,7 +79,7 @@ const Reports: React.FC<ReportsProps> = ({ embedId, clientId }) => {
       }
     } catch (error) {
       console.error('❌ Network error fetching metrics:', error);
-      setError('Failed to connect to server. Make sure the backend is running on http://localhost:3001');
+      setError('Failed to connect to server. Make sure the backend is running on http://localhost:3002');
     } finally {
       setLoading(false);
     }

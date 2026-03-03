@@ -18,6 +18,7 @@ interface CreateDashboardProps {
   onClose: () => void;
   onSuccess: (dashboard: CreatedDashboard) => void;
   clientId: string;
+  userIdentifier?: string; // User/customer identifier for dashboard scoping
   inline?: boolean;
 }
 
@@ -32,6 +33,7 @@ interface FormData {
   embedName: string;
   description: string;
   sourceDashboardId: string;
+  isPrivate: boolean;
 }
 
 const CreateDashboard: React.FC<CreateDashboardProps> = ({
@@ -39,12 +41,14 @@ const CreateDashboard: React.FC<CreateDashboardProps> = ({
   onClose,
   onSuccess,
   clientId,
+  userIdentifier,
   inline = false
 }) => {
   const [formData, setFormData] = useState<FormData>({
     embedName: '',
     description: '',
-    sourceDashboardId: 'dbn-demo'
+    sourceDashboardId: 'dbn-demo',
+    isPrivate: false
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +74,8 @@ const CreateDashboard: React.FC<CreateDashboardProps> = ({
     setFormData({
       embedName: '',
       description: '',
-      sourceDashboardId: 'dbn-demo'
+      sourceDashboardId: 'dbn-demo',
+      isPrivate: false
     });
     setError(null);
     setIsLoading(false);
@@ -94,11 +99,10 @@ const CreateDashboard: React.FC<CreateDashboardProps> = ({
     setError(null);
 
     try {
-      console.log('🚀 Creating dashboard with data:', formData);
 
       const dashboardId = generateDashboardId(formData.embedName);
 
-      const response = await fetch('http://localhost:3001/api/v2/create-dashboard', {
+      const response = await fetch('http://localhost:3002/api/v2/create-dashboard', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -107,14 +111,15 @@ const CreateDashboard: React.FC<CreateDashboardProps> = ({
           dashboardName: formData.embedName.trim(),
           description: formData.description.trim(),
           clientId: clientId,
-          datamartName: 'Demo Embed Datamart'
+          datamartName: 'Sales Management Datamart',
+          userIdentifier: userIdentifier || clientId, // Store Name (e.g., 'Ramirez Ltd') for dashboard grouping
+          isPrivate: formData.isPrivate // Privacy setting
         })
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log('✅ Dashboard created successfully:', data);
         const createdDashboard: CreatedDashboard = {
           dashboardId: data.dashboardId,
           embedId: data.embedId,
@@ -129,7 +134,7 @@ const CreateDashboard: React.FC<CreateDashboardProps> = ({
       }
     } catch (err) {
       console.error('❌ Network error creating dashboard:', err);
-      setError('Failed to connect to server. Make sure the backend is running on http://localhost:3001');
+      setError('Failed to connect to server. Make sure the backend is running on http://localhost:3002');
     } finally {
       setIsLoading(false);
     }
@@ -160,6 +165,25 @@ const CreateDashboard: React.FC<CreateDashboardProps> = ({
           disabled={isLoading}
           rows={3}
         />
+      </div>
+
+      <div className="flex items-start space-x-2 p-3 rounded-md border bg-muted/50">
+        <input
+          type="checkbox"
+          id="dashboard-privacy"
+          checked={formData.isPrivate}
+          onChange={(e) => handleInputChange('isPrivate', e.target.checked)}
+          disabled={isLoading}
+          className="mt-1"
+        />
+        <div className="flex-1">
+          <Label htmlFor="dashboard-privacy" className="cursor-pointer">
+            Make this dashboard private
+          </Label>
+          <p className="text-xs text-muted-foreground mt-1">
+            Private dashboards are only visible to you. Uncheck to make it visible to everyone in your tenant.
+          </p>
+        </div>
       </div>
 
       {error && (

@@ -6,7 +6,15 @@ export interface User {
   permissions: Permission[];
   avatar?: string;
   customerId: string; // Maps to customer_id in the database for data filtering
-  clientId: string;   // Top-level tenant ID (101 for our demo)
+  clientId: string;   // Top-level tenant ID (client/tenant identifier)
+  storeName: string;  // Store Name for app filter (e.g., "Ramirez Ltd")
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  description: string;
+  users: User[];
 }
 
 export interface Permission {
@@ -79,41 +87,397 @@ export const PERMISSIONS = {
   }
 } as const;
 
-// Predefined users mapped to actual customer IDs from the database
-export const USERS: User[] = [
+// Define tenants with their users
+export const TENANTS: Tenant[] = [
   {
-    id: 'michael',
-    name: 'Michael Thompson',
-    email: 'michael.thompson@acmecorp.com',
-    role: 'Process Owner',
-    avatar: '👨‍💼',
-    customerId: '285407', // Maps to customer_id in demo_sales table
-    clientId: '101',      // Top-level tenant ID
-    permissions: [
-      { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
-      { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
-      { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: true },
-      { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: false }, // Process Owner has limited management rights
-      { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false } // Can't manage custom dashboards
+    id: '101',
+    name: 'Client 101',
+    description: 'Client tenant 101 with 4 stores',
+    users: [
+      {
+        id: 'user-101-1',
+        name: 'Store Manager - Ramirez Ltd',
+        email: 'manager1@client101.com',
+        role: 'Store Manager',
+        avatar: '👨‍💼',
+        customerId: '101-1',
+        clientId: '101',
+        storeName: 'Ramirez Ltd',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-101-2',
+        name: 'Store Manager - Reese, Allen and Fisher',
+        email: 'manager2@client101.com',
+        role: 'Store Manager',
+        avatar: '👩‍💼',
+        customerId: '101-2',
+        clientId: '101',
+        storeName: 'Reese, Allen and Fisher',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-101-3',
+        name: 'Store Manager - Jenkins-Cook',
+        email: 'manager3@client101.com',
+        role: 'Store Manager',
+        avatar: '👨‍💻',
+        customerId: '101-3',
+        clientId: '101',
+        storeName: 'Jenkins-Cook',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-101-4',
+        name: 'Store Manager - Vance Inc',
+        email: 'manager4@client101.com',
+        role: 'Store Manager',
+        avatar: '👩‍💻',
+        customerId: '101-4',
+        clientId: '101',
+        storeName: 'Vance Inc',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      }
     ]
   },
   {
-    id: 'jake',
-    name: 'Jake Rodriguez',
-    email: 'jake.rodriguez@acmecorp.com',
-    role: 'Automation Admin',
-    avatar: '👨‍💻',
-    customerId: '440422', // Maps to customer_id in demo_sales table
-    clientId: '101',      // Top-level tenant ID
-    permissions: [
-      { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
-      { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
-      { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: true }, // Automation Admin has full publish rights
-      { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
-      { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: true } // Can manage others' dashboards
+    id: '102',
+    name: 'Client 102',
+    description: 'Client tenant 102 with 4 stores',
+    users: [
+      {
+        id: 'user-102-1',
+        name: 'Store Manager - Holt, Simpson and Bowman',
+        email: 'manager1@client102.com',
+        role: 'Store Manager',
+        avatar: '👨‍💼',
+        customerId: '102-1',
+        clientId: '102',
+        storeName: 'Holt, Simpson and Bowman',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-102-2',
+        name: 'Store Manager - Green, Smith and Wang',
+        email: 'manager2@client102.com',
+        role: 'Store Manager',
+        avatar: '👩‍💼',
+        customerId: '102-2',
+        clientId: '102',
+        storeName: 'Green, Smith and Wang',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-102-3',
+        name: 'Store Manager - Rivas LLC',
+        email: 'manager3@client102.com',
+        role: 'Store Manager',
+        avatar: '👨‍💻',
+        customerId: '102-3',
+        clientId: '102',
+        storeName: 'Rivas LLC',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-102-4',
+        name: 'Store Manager - Ramirez-Olson',
+        email: 'manager4@client102.com',
+        role: 'Store Manager',
+        avatar: '👩‍💻',
+        customerId: '102-4',
+        clientId: '102',
+        storeName: 'Ramirez-Olson',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      }
+    ]
+  },
+  {
+    id: '103',
+    name: 'Client 103',
+    description: 'Client tenant 103 with 4 stores',
+    users: [
+      {
+        id: 'user-103-1',
+        name: 'Store Manager - Chang and Sons',
+        email: 'manager1@client103.com',
+        role: 'Store Manager',
+        avatar: '👨‍💼',
+        customerId: '103-1',
+        clientId: '103',
+        storeName: 'Chang and Sons',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-103-2',
+        name: 'Store Manager - Gibson Ltd',
+        email: 'manager2@client103.com',
+        role: 'Store Manager',
+        avatar: '👩‍💼',
+        customerId: '103-2',
+        clientId: '103',
+        storeName: 'Gibson Ltd',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-103-3',
+        name: 'Store Manager - Davis, Johnson and Cobb',
+        email: 'manager3@client103.com',
+        role: 'Store Manager',
+        avatar: '👨‍💻',
+        customerId: '103-3',
+        clientId: '103',
+        storeName: 'Davis, Johnson and Cobb',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-103-4',
+        name: 'Store Manager - Nelson-Shea',
+        email: 'manager4@client103.com',
+        role: 'Store Manager',
+        avatar: '👩‍💻',
+        customerId: '103-4',
+        clientId: '103',
+        storeName: 'Nelson-Shea',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      }
+    ]
+  },
+  {
+    id: '104',
+    name: 'Client 104',
+    description: 'Client tenant 104 with 4 stores',
+    users: [
+      {
+        id: 'user-104-1',
+        name: 'Store Manager - Lawrence-Medina',
+        email: 'manager1@client104.com',
+        role: 'Store Manager',
+        avatar: '👨‍💼',
+        customerId: '104-1',
+        clientId: '104',
+        storeName: 'Lawrence-Medina',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-104-2',
+        name: 'Store Manager - Sutton Inc',
+        email: 'manager2@client104.com',
+        role: 'Store Manager',
+        avatar: '👩‍💼',
+        customerId: '104-2',
+        clientId: '104',
+        storeName: 'Sutton Inc',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-104-3',
+        name: 'Store Manager - Lopez Group',
+        email: 'manager3@client104.com',
+        role: 'Store Manager',
+        avatar: '👨‍💻',
+        customerId: '104-3',
+        clientId: '104',
+        storeName: 'Lopez Group',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-104-4',
+        name: 'Store Manager - Carroll Inc',
+        email: 'manager4@client104.com',
+        role: 'Store Manager',
+        avatar: '👩‍💻',
+        customerId: '104-4',
+        clientId: '104',
+        storeName: 'Carroll Inc',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      }
+    ]
+  },
+  {
+    id: '105',
+    name: 'Client 105',
+    description: 'Client tenant 105 with 4 stores',
+    users: [
+      {
+        id: 'user-105-1',
+        name: 'Store Manager - Lucas-Wright',
+        email: 'manager1@client105.com',
+        role: 'Store Manager',
+        avatar: '👨‍💼',
+        customerId: '105-1',
+        clientId: '105',
+        storeName: 'Lucas-Wright',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-105-2',
+        name: 'Store Manager - Carter, Blackburn and Franklin',
+        email: 'manager2@client105.com',
+        role: 'Store Manager',
+        avatar: '👩‍💼',
+        customerId: '105-2',
+        clientId: '105',
+        storeName: 'Carter, Blackburn and Franklin',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-105-3',
+        name: 'Store Manager - Baxter-Dixon',
+        email: 'manager3@client105.com',
+        role: 'Store Manager',
+        avatar: '👨‍💻',
+        customerId: '105-3',
+        clientId: '105',
+        storeName: 'Baxter-Dixon',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      },
+      {
+        id: 'user-105-4',
+        name: 'Store Manager - Gonzalez Group',
+        email: 'manager4@client105.com',
+        role: 'Store Manager',
+        avatar: '👩‍💻',
+        customerId: '105-4',
+        clientId: '105',
+        storeName: 'Gonzalez Group',
+        permissions: [
+          { ...PERMISSIONS.CREATE_WIDGETS, enabled: true },
+          { ...PERMISSIONS.CREATE_DASHBOARDS, enabled: true },
+          { ...PERMISSIONS.PUBLISH_DASHBOARDS, enabled: false },
+          { ...PERMISSIONS.MANAGE_CUSTOM_WIDGETS, enabled: true },
+          { ...PERMISSIONS.MANAGE_CUSTOM_DASHBOARDS, enabled: false }
+        ]
+      }
     ]
   }
 ];
+
+// Flatten all users for backward compatibility
+export const USERS: User[] = TENANTS.flatMap(tenant => tenant.users);
+
+// Helper functions for tenant management
+export const getTenantById = (tenantId: string): Tenant | undefined => {
+  return TENANTS.find(t => t.id === tenantId);
+};
+
+export const getUsersByTenant = (tenantId: string): User[] => {
+  const tenant = getTenantById(tenantId);
+  return tenant ? tenant.users : [];
+};
 
 // OOTB Dashboards that come with the system with role-based visibility
 export const OOTB_DASHBOARDS: Dashboard[] = [
@@ -125,7 +489,7 @@ export const OOTB_DASHBOARDS: Dashboard[] = [
     isPrivate: false,
     createdBy: 'system',
     publishedTo: [{ type: 'all' }],
-    visibleToRoles: ['Process Owner', 'Automation Admin'], // Visible to all roles
+    visibleToRoles: ['Store Manager'], // Visible to all roles
     widgets: [
       {
         id: 'my-automations',
@@ -140,100 +504,27 @@ export const OOTB_DASHBOARDS: Dashboard[] = [
     lastModified: '2024-01-01T00:00:00Z'
   },
   {
-    id: 'automations',
-    name: 'Automations',
-    description: 'Automation management and monitoring',
+    id: 'stores',
+    name: 'Stores',
+    description: 'Store management and monitoring',
     isOOTB: true,
     isPrivate: false,
     createdBy: 'system',
     publishedTo: [{ type: 'all' }],
-    visibleToRoles: ['Process Owner', 'Automation Admin'], // Visible to all roles
+    visibleToRoles: ['Store Manager'], // Visible to all roles
     widgets: [],
     lastModified: '2024-01-01T00:00:00Z'
   },
   {
-    id: 'devices',
-    name: 'Devices',
-    description: 'Device management and status',
+    id: 'analytics',
+    name: 'Analytics',
+    description: 'Store analytics and performance',
     isOOTB: true,
     isPrivate: false,
     createdBy: 'system',
     publishedTo: [{ type: 'all' }],
-    visibleToRoles: ['Automation Admin'], // Only visible to Automation Admins
-    requiredPermissions: ['manage_custom_widgets'],
-    widgets: [],
-    lastModified: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 'api-tasks',
-    name: 'API Tasks',
-    description: 'API task monitoring and management',
-    isOOTB: true,
-    isPrivate: false,
-    createdBy: 'system',
-    publishedTo: [{ type: 'all' }],
-    visibleToRoles: ['Automation Admin'], // Only visible to Automation Admins
-    requiredPermissions: ['manage_custom_widgets'],
-    widgets: [],
-    lastModified: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 'ai-governance',
-    name: 'AI Governance',
-    description: 'AI governance and compliance monitoring',
-    isOOTB: true,
-    isPrivate: false,
-    createdBy: 'system',
-    publishedTo: [{ type: 'all' }],
-    visibleToRoles: ['Process Owner'], // Only visible to Process Owners
-    requiredPermissions: ['publish_dashboards'],
+    visibleToRoles: ['Store Manager'], // Visible to all roles
     widgets: [],
     lastModified: '2024-01-01T00:00:00Z'
   }
 ];
-
-// Utility function to check if a user can see a dashboard
-export const canUserSeeDashboard = (user: User, dashboard: Dashboard): boolean => {
-  // If it's the user's own private dashboard, they can always see it
-  if (dashboard.isPrivate && dashboard.createdBy === user.id) {
-    return true;
-  }
-
-  // If it's published to all, everyone can see it (unless role-restricted)
-  if (dashboard.publishedTo.some(target => target.type === 'all')) {
-    // Check role restrictions if any
-    if (dashboard.visibleToRoles && dashboard.visibleToRoles.length > 0) {
-      return dashboard.visibleToRoles.includes(user.role);
-    }
-    return true;
-  }
-
-  // Check if published to user's specific role
-  if (dashboard.publishedTo.some(target => target.type === 'role' && target.value === user.role)) {
-    return true;
-  }
-
-  // Check if published to specific user
-  if (dashboard.publishedTo.some(target => target.type === 'user' && target.value === user.id)) {
-    return true;
-  }
-
-  // Check role-based visibility
-  if (dashboard.visibleToRoles && dashboard.visibleToRoles.includes(user.role)) {
-    // Check required permissions if any
-    if (dashboard.requiredPermissions && dashboard.requiredPermissions.length > 0) {
-      return dashboard.requiredPermissions.every(permission =>
-        user.permissions.some(userPerm => userPerm.id === permission && userPerm.enabled)
-      );
-    }
-    return true;
-  }
-
-  return false;
-};
-
-// Utility function to filter dashboards based on user permissions
-export const getVisibleDashboards = (user: User, dashboards: Dashboard[]): Dashboard[] => {
-  return dashboards.filter(dashboard => canUserSeeDashboard(user, dashboard));
-};
-
