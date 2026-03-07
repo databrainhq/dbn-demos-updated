@@ -74,18 +74,18 @@ These are configurable via environment variables but have defaults:
 ### API Endpoints
 
 #### Backend URL (hardcoded in frontend)
-**Value:** `http://localhost:3001`
+**Value:** `http://localhost:3002` (configurable via `VITE_API_URL`)
 
-**Locations:**
-- `src/App.tsx:96` - Guest token endpoint
-- `src/components/CreateDashboard.tsx:102` - Create dashboard
-- `src/components/DashboardSelector.tsx:72, 96` - Fetch dashboards/embeds
-- `src/components/DashboardActions.tsx:53, 92` - Copy/publish dashboard
-- `src/components/WidgetManager.tsx:70, 106, 158, 203` - Widget CRUD
-- `src/components/Reports.tsx:55` - Fetch metrics
-- `src/components/Settings.tsx:33, 60, 78` - Config endpoints
+**Locations:** All frontend API calls use `API_BASE_URL` from `src/lib/config.ts` (env: `VITE_API_URL`, default `http://localhost:3002`).
+- `src/App.tsx` - Guest token endpoint
+- `src/components/CreateDashboard.tsx` - Create dashboard
+- `src/components/DashboardSelector.tsx` - Fetch dashboards/embeds
+- `src/components/DashboardActions.tsx` - Copy/publish dashboard (optional, not mounted)
+- `src/components/Reports.tsx` - Fetch metrics, metric data, CSV
+- `src/components/Settings.tsx` - Config endpoints
+- `src/components/AiPilotPanel.tsx` - AI Pilot
 
-**⚠️ FOR PRODUCTION:** Replace with environment variable or relative URLs
+**Note:** Widget CRUD is not implemented in this template (no backend routes). Set `VITE_API_URL` in root `.env` for production.
 
 #### Frontend URL
 **Value:** `http://localhost:5173`
@@ -224,11 +224,11 @@ const knownDashboardsWithFilters = ['chat-mode-dash'];
 ## 🚀 Recommended Changes for Production
 
 ### 1. Environment Variables for URLs
-Replace hardcoded `http://localhost:3001` with:
+The template uses `src/lib/config.ts`; override with:
 
 ```typescript
 // Create a config file
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 ```
 
 ### 2. Dynamic Dashboard Discovery
@@ -287,7 +287,7 @@ grep -r "chat-mode-dash" .
 grep -r "Sales Management" .
 
 # Find localhost URLs
-grep -r "localhost:3001" .
+grep -r "localhost:3002" .
 
 # Find tenant/client IDs
 grep -r "clientId: '10" .

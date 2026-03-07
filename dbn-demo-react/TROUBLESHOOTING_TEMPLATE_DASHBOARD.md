@@ -74,7 +74,7 @@ Try creating a private dashboard again. Check backend logs for:
 Run this command to list dashboards in your workspace:
 
 ```bash
-curl -X POST http://localhost:3001/api/v2/dashboards \
+curl -X POST http://localhost:3002/api/v2/dashboards \
   -H "Content-Type: application/json" \
   -d '{"isPagination": false, "pageNumber": 1}' | python3 -m json.tool
 ```
@@ -222,7 +222,7 @@ DATABRAIN_WORKSPACE_NAME=Your Actual Workspace Name
 Verify your API credentials are working:
 
 ```bash
-curl -X POST http://localhost:3001/api/v2/dashboards \
+curl -X POST http://localhost:3002/api/v2/dashboards \
   -H "Content-Type: application/json" \
   -d '{"isPagination": false}'
 ```

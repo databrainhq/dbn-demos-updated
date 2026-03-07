@@ -7,7 +7,7 @@ Complete reference for the DataBrain Demo backend API endpoints.
 ## Base URL
 
 ```
-http://localhost:3001
+http://localhost:3002
 ```
 
 For production, replace with your deployed backend URL.
@@ -616,13 +616,13 @@ The backend doesn't implement rate limiting, but DataBrain API may have rate lim
 ### Health Check
 
 ```bash
-curl http://localhost:3001/api/config/status
+curl http://localhost:3002/api/config/status
 ```
 
 ### Test Guest Token Generation
 
 ```bash
-curl -X POST http://localhost:3001/api/dashboard-guest-token \
+curl -X POST http://localhost:3002/api/dashboard-guest-token \
   -H "Content-Type: application/json" \
   -d '{
     "clientId": "101",

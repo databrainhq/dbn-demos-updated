@@ -118,12 +118,12 @@ const PORT = 3001;  // Change to your preferred port
 ```
 
 ### Change Frontend URLs
-The frontend hardcodes `http://localhost:3001` for the backend API.
+The frontend uses `http://localhost:3002` for the backend API by default (configurable via `VITE_API_URL` in root `.env`).
 
 **For production**, replace with environment variable:
 ```typescript
 // Create src/config.ts
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 ```
 
 ---
@@ -132,11 +132,11 @@ export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 Before reporting issues, verify:
 
-- [ ] Backend server is running (shows: "Server is running on http://localhost:3001")
+- [ ] Backend server is running (shows: "Server is running on http://localhost:3002")
 - [ ] Frontend dev server is running (shows: "Local: http://localhost:5173")
 - [ ] No errors in backend terminal
 - [ ] Browser console shows no red errors (F12 to open)
-- [ ] You can access: http://localhost:3001/api/config/status
+- [ ] You can access: http://localhost:3002/api/config/status
 - [ ] API Token and Data App Name are correct (no typos)
 
 ---

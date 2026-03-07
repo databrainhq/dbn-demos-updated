@@ -249,7 +249,7 @@ npm start
 
 ✅ You should see:
 ```
-🚀 Server is running on http://localhost:3001
+🚀 Server is running on http://localhost:3002
 💡 Frontend should be running on: http://localhost:5173
 ```
 
@@ -300,7 +300,7 @@ npm run dev
 
 **Solution:**
 1. Check that you started the backend: `cd backend && npm start`
-2. Verify you see: "Server is running on http://localhost:3001"
+2. Verify you see: "Server is running on http://localhost:3002"
 3. Keep that terminal window open
 
 ---
