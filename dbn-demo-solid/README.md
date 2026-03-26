@@ -1,34 +1,46 @@
-## Usage
+# Databrain + Solid Demo
 
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via `pnpm up -Lri`.
+Embed a Databrain dashboard in a SolidJS + Vite app using `createResource` for reactive data fetching.
 
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package manager will work. This file can be safely be removed once you clone a template.
+## Features
+
+- Guest token fetched via `createResource` from Express backend
+- Signals-based state management
+- Setup/error states with helpful prompts
+
+## Quick Start
 
 ```bash
-$ npm install # or pnpm install or yarn install
+git clone https://github.com/databrainhq/dbn-demo-solid.git
+cd dbn-demo-solid
+npm run setup    # Installs deps, copies .env files
+# Edit backend/.env → set DATABRAIN_API_TOKEN and DATA_APP_NAME
+# Edit .env → set VITE_DASHBOARD_ID
+npm run dev      # Starts backend + frontend — http://localhost:3000
 ```
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
+## Environment Variables
 
-## Available Scripts
+### Backend (`backend/.env`)
 
-In the project directory, you can run:
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABRAIN_API_TOKEN` | Yes | Per-data-app API token |
+| `DATA_APP_NAME` | Yes | Data app name in Databrain |
+| `PORT` | No | Backend port (default: `3002`) |
 
-### `npm dev` or `npm start`
+### Frontend (`.env`)
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_DASHBOARD_ID` | Yes | Dashboard embed ID |
 
-The page will reload if you make edits.<br>
+## How It Works
 
-### `npm run build`
+1. `backend/server.js` — Express API that generates guest tokens
+2. `src/App.tsx` — SolidJS component using `createResource` for reactive token fetching and `Show` for conditional rendering
 
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
+## Links
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-## Deployment
-
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+- [Databrain Docs](https://docs.usedatabrain.com)
+- [SolidJS Framework Guide](https://docs.usedatabrain.com/developer-docs/framework-specific-guide)

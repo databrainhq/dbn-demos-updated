@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Python virtual environment
+venv/
+backend/venv/
+*.pyc
+__pycache__/
+
+# Backend logs
+backend/*.log
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -22,3 +31,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables — NEVER commit secrets
+.env
+.env.local
+.env.production
+.env.development
+backend/.env
+backend/.env.local
+backend/.env.production
+
+# Keep .env.example files (they contain no secrets)
+!.env.example
+!backend/.env.example

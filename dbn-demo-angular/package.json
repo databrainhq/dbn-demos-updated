@@ -5,7 +5,10 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "dev": "concurrently -n api,app -c blue,green \"npm run dev:backend\" \"ng serve\"",
+    "dev:backend": "cd backend && npm run dev",
+    "setup": "npm install && cd backend && npm install && cd .. && test -f backend/.env || cp backend/.env.example backend/.env && echo '\\n✅ Setup complete. Edit backend/.env, then run: npm run dev\\n'"
   },
   "dependencies": {
     "@angular/animations": "^15.0.0",
@@ -16,12 +19,13 @@
     "@angular/platform-browser": "^15.0.0",
     "@angular/platform-browser-dynamic": "^15.0.0",
     "@angular/router": "^15.0.0",
-    "@databrainhq/plugin": "^0.15.60",
+    "@databrainhq/plugin": "^0.16.34",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.12.0"
   },
   "devDependencies": {
+    "concurrently": "^9.1.0",
     "@angular-builders/custom-webpack": "15.0.0",
     "@angular-devkit/build-angular": "^15.0.0",
     "@angular/cli": "~15.0.0",

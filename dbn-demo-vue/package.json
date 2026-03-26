@@ -4,16 +4,20 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -n api,app -c blue,green \"npm run dev:backend\" \"vite\"",
+    "dev:frontend": "vite",
+    "dev:backend": "cd backend && npm run dev",
+    "setup": "npm install && cd backend && npm install && cd .. && test -f backend/.env || cp backend/.env.example backend/.env && test -f .env || cp .env.example .env && echo '\\n✅ Setup complete. Edit backend/.env and .env, then run: npm run dev\\n'",
     "build": "vue-tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@databrainhq/plugin": "^0.15.60",
+    "@databrainhq/plugin": "^0.16.34",
     "vue": "^3.2.47"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.1.0",
+    "concurrently": "^9.1.0",
     "typescript": "^5.0.2",
     "vite": "^4.3.9",
     "vue-tsc": "^1.4.2"

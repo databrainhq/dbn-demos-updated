@@ -6,10 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "setup": "npm install && test -f .env.local || cp .env.example .env.local && echo '\\n✅ Setup complete. Edit .env.local with your Databrain credentials, then run: npm run dev\\n'"
   },
   "dependencies": {
-    "@databrainhq/plugin": "^0.15.60",
+    "@databrainhq/plugin": "^0.16.34",
     "next": "14.2.4",
     "react": "^18",
     "react-dom": "^18"

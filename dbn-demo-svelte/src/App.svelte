@@ -1,34 +1,61 @@
 <script lang="ts">
 import '@databrainhq/plugin/web';
-const urlParams = new URLSearchParams(window.location.search);
-const token = urlParams.get('token');
-const dashboardId = urlParams.get('dashboardId');
+import { onMount } from 'svelte';
 
-/* If you want to customize action buttons on embed
-const dbnDashboard = document.querySelector('dbn-dashboard')?.shadowRoot?.querySelector('.dbn-dashboard') as HTMLElement & {
-      onClickCreateMetric?: () => void;
-      onClickManageMetrics?: () => void;
-      onClickScheduleReports?: () => void;
-      onClickCustomizeLayout?: () => void;
-    };
-function createMetric() {
-  dbnDashboardElement?.onClickCreateMetric?.();
+const API_URL = 'http://localhost:3002';
+const DASHBOARD_ID = import.meta.env.VITE_DASHBOARD_ID || '';
+
+let token = '';
+let state: 'idle' | 'loading' | 'setup' | 'ready' | 'error' = 'idle';
+let error = '';
+
+async function fetchToken() {
+  state = 'loading';
+  try {
+    const res = await fetch(`${API_URL}/api/guest-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: 'default' }),
+    });
+    const data = await res.json();
+    if (res.ok && data.configured === false) { state = 'setup'; return; }
+    if (res.ok && data.guestToken) { token = data.guestToken; state = 'ready'; return; }
+    state = 'error';
+    error = data.error || 'Failed to get guest token';
+  } catch (e: any) {
+    state = 'error';
+    error = e.message || 'Connection failed';
+  }
 }
-const dashboardOptions = {
-  showDashboardActions: false,
-}; */
+
+onMount(fetchToken);
 </script>
 
-<main>
-  <dbn-dashboard
-    token={token}
-    dashboard-id={dashboardId}
-    <!-- When you want to hide the dashboard actions and add your own buttons -->
-    options={dashboardOptions} 
-  />
-  <!-- Example of adding your own buttons with embed actions -->
-  <button on:click={createMetric}>Create Metric</button>
-</main>
-
-<style>
-</style>
+{#if state === 'loading' || state === 'idle'}
+  <div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#666;">
+    Loading dashboard…
+  </div>
+{:else if state === 'setup'}
+  <div style="max-width:400px;margin:64px auto;padding:24px;border:1px solid #e5e7eb;border-radius:8px;">
+    <h2 style="font-size:18px;font-weight:600;margin-bottom:8px;">Configure Databrain</h2>
+    <p style="font-size:14px;color:#666;margin-bottom:16px;">
+      Set <code>DATABRAIN_API_TOKEN</code> and <code>DATA_APP_NAME</code> in <code>backend/.env</code>.
+    </p>
+    <button on:click={fetchToken} style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">Check again</button>
+  </div>
+{:else if state === 'error'}
+  <div style="max-width:400px;margin:64px auto;padding:24px;border:1px solid #e5e7eb;border-radius:8px;">
+    <h2 style="font-size:18px;font-weight:600;color:#dc2626;margin-bottom:8px;">Error</h2>
+    <p style="font-size:14px;color:#666;margin-bottom:16px;">{error}</p>
+    <button on:click={fetchToken} style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;">Retry</button>
+  </div>
+{:else if state === 'ready'}
+  <div style="height:100vh;display:flex;flex-direction:column;">
+    <div style="border-bottom:1px solid #e5e7eb;padding:12px;display:flex;align-items:center;gap:12px;background:white;">
+      <span style="font-weight:600;font-size:14px;">Databrain + Svelte</span>
+    </div>
+    <div style="flex:1;padding:8px;">
+      <dbn-dashboard token={token} dashboard-id={DASHBOARD_ID} />
+    </div>
+  </div>
+{/if}

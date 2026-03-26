@@ -1,37 +1,45 @@
-# Angular
+# Databrain + Angular Demo
 
-This directory is a brief example of an [Angular](https://angular.io/) app that can be deployed to Vercel with zero configuration.
+Embed a Databrain dashboard in an Angular 15 app with an Express backend for secure guest token generation.
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.1.3.
+## Features
 
-## Deploy Your Own
+- Guest token fetched from Express backend
+- Rich attribute bindings (options, boolean attributes)
+- Embed functions via shadow DOM (Create Metric, Manage Metrics)
+- `TOKEN_EXPIRED` server event handling
+- Toggleable CSV download, email, and fullscreen options
 
-Deploy your own Angular project with Vercel.
+## Quick Start
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vercel/vercel/tree/main/examples/angular&template=angular)
+```bash
+git clone https://github.com/databrainhq/dbn-demo-angular.git
+cd dbn-demo-angular
+npm run setup    # Installs deps, copies backend/.env.example → backend/.env
+# Edit backend/.env → set DATABRAIN_API_TOKEN and DATA_APP_NAME
+npm run dev      # Starts backend + frontend together
+# Open http://localhost:4200?dashboardId=your-embed-id
+```
 
-_Live Example: https://angular-template.vercel.app_
+## Environment Variables
 
-## Development server
+### Backend (`backend/.env`)
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABRAIN_API_TOKEN` | Yes | Per-data-app API token |
+| `DATA_APP_NAME` | Yes | Data app name in Databrain |
+| `DATABRAIN_API_BASE_URL` | No | API endpoint (default: `https://api.usedatabrain.com`) |
+| `PORT` | No | Backend port (default: `3002`) |
 
-## Code scaffolding
+Dashboard ID is passed via URL query param: `?dashboardId=your-embed-id`
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## How It Works
 
-## Build
+1. `backend/server.js` — Express API that generates guest tokens
+2. `src/app/app.component.ts` — Angular component with inline template, fetches token, renders `<dbn-dashboard>` with attribute bindings
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Links
 
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+- [Databrain Docs](https://docs.usedatabrain.com)
+- [Component Options Reference](https://docs.usedatabrain.com/developer-docs/helpers/component-options-reference)

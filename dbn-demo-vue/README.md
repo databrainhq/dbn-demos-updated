@@ -1,18 +1,42 @@
-# Vue 3 + TypeScript + Vite
+# Databrain + Vue 3 Demo
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Embed a Databrain dashboard in a Vue 3 + Vite app with reactive theming and self-serve metric creation.
 
-## Recommended IDE Setup
+## Features
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+- Guest token fetched from Express backend
+- Reactive theme toggle (light/dark) via `theme` attribute
+- Embed functions (Create Metric, Manage Metrics) via shadow DOM
+- `TOKEN_EXPIRED` server event handling
 
-## Type Support For `.vue` Imports in TS
+## Quick Start
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
+```bash
+git clone https://github.com/databrainhq/dbn-demo-vue.git
+cd dbn-demo-vue
+npm run setup    # Installs deps, copies .env files
+# Edit backend/.env → set DATABRAIN_API_TOKEN and DATA_APP_NAME
+# Edit .env → set VITE_DASHBOARD_ID
+npm run dev      # Starts backend + frontend — http://localhost:5173
+```
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+## Environment Variables
 
-1. Disable the built-in TypeScript Extension
-   1. Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-   2. Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+### Backend (`backend/.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABRAIN_API_TOKEN` | Yes | Per-data-app API token |
+| `DATA_APP_NAME` | Yes | Data app name in Databrain |
+| `PORT` | No | Backend port (default: `3002`) |
+
+### Frontend (`.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_DASHBOARD_ID` | Yes | Dashboard embed ID |
+
+## Links
+
+- [Databrain Docs](https://docs.usedatabrain.com)
+- [Vue Framework Guide](https://docs.usedatabrain.com/developer-docs/framework-specific-guide)

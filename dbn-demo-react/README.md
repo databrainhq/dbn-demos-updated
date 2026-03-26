@@ -1,208 +1,100 @@
-# DataBrain React Demo - Customizability Showcase
+# Databrain React Demo — Hero Reference App
 
-A comprehensive React application demonstrating DataBrain's advanced customizability features through a realistic A360 (Automation 360) scenario. This demo showcases permission-based UI, custom widget creation, dashboard publishing, and user role management.
+The most comprehensive Databrain embedding template. A multi-page React + Vite app with an Express backend showcasing every major Databrain capability: dashboard embedding, metric cards, theming, multi-tenant data isolation, AI chat, self-serve analytics, and MCP-driven setup.
 
-## 🌟 New Demo Features
+## What This Demo Shows
 
-### 👥 User Personas & Permissions
-- **Michael Thompson** (Process Owner) & **Jake Rodriguez** (Automation Admin)
-- **User Switching** - Easy persona switching for demos
-- **Permission Gates** - UI elements appear/disappear based on user permissions
+- **Dashboard Embed** — `<dbn-dashboard>` with a full options panel (CSV export, fullscreen, i18n, chart settings, server events)
+- **Metric Embed** — `<dbn-metric>` cards with configurable size, renderer, variant, and filters
+- **Theming** — Live theme switcher using `theme` JSON, `theme-name` presets, and `chart-colors`
+- **Multi-Tenant** — Client switcher with `clientId`, dashboard app filters, and RLS
+- **AI Chat & Self-Serve** — Metric creation (drag-and-drop or chat), AI pilot, imperative embed functions via shadow DOM
+- **MCP Runbooks** — Step-by-step tool chains for automated setup, branding, filters, i18n, and self-serve
 
-### 🎨 Custom Widget Creation
-- **Multi-step Wizard** - Data selection → Chart type → Configuration → Preview
-- **10+ Chart Types** - Bar, Line, Pie, Gauge, KPI, Heatmap, and more
-- **Privacy by Default** - Widgets are private until dashboard is published
-
-### 📊 Dashboard Management  
-- **Save As Feature** - Create dashboard copies (e.g., "Overview_Finance")
-- **Publishing System** - Publish to All users, Specific roles, or Specific users
-- **OOTB Protection** - System dashboards protected, custom ones manageable
-
-### 🔐 Security & Governance
-- **Role-based Access Control** - Granular permissions per user
-- **Content Separation** - Clear OOTB vs custom content distinction
-- **Data Access Control** - Users only see permitted data sources
-
-## 📖 Demo Guide
-See [DEMO_GUIDE.md](./DEMO_GUIDE.md) for complete demo script and usage instructions.
-
-## 🚀 Quick Start
-
-### 1. Install Dependencies
-
-**Frontend (React app):**
-```bash
-npm install
-```
-
-**Backend (Node.js server):**
-```bash
-cd backend
-npm install
-```
-
-### 2. Configure DataBrain API Token
-
-Set your DataBrain API token as an environment variable:
+## Quick Start
 
 ```bash
-export DATABRAIN_API_TOKEN=your-actual-api-token-here
+git clone https://github.com/databrainhq/dbn-demo-react.git
+cd dbn-demo-react
+npm run setup    # Installs deps, copies .env files
+# Edit backend/.env → set DATABRAIN_API_TOKEN and DATA_APP_NAME
+# Edit .env → set VITE_DEFAULT_DASHBOARD_ID to your embed ID
+npm run dev      # Starts backend + frontend together
 ```
 
-### 3. Start the Backend Server
+Open http://localhost:5173. The app works without credentials — each page shows explanatory content with code snippets. To see live embeds, configure the env files.
 
-```bash
-cd backend
-npm start
-```
+## Environment Variables
 
-### 4. Start the React App
+### Backend (`backend/.env`)
 
-In a new terminal:
-```bash
-npm run dev
-```
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABRAIN_API_TOKEN` | Yes | Per-data-app API token from Data App > API Token |
+| `DATA_APP_NAME` | Yes | Data app name in your Databrain workspace |
+| `DATABRAIN_API_BASE_URL` | No | API endpoint (default: `https://api.usedatabrain.com`) |
+| `PORT` | No | Backend port (default: `3002`) |
 
-## 🔧 How It Works
+### Frontend (`.env`)
 
-### Backend Generation (Recommended)
-1. **Dashboard Request**: User enters client ID and dashboard ID from their DataBrain app
-2. **Backend Token Generation**: Backend generates guest token using the provided client ID
-3. **Dashboard Display**: React app displays dashboard with generated token
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_API_URL` | No | Backend URL (default: `http://localhost:3002`) |
+| `VITE_DATABRAIN_PLUGIN_URL` | No | Plugin base URL (default: `https://api.usedatabrain.com`) |
+| `VITE_DEFAULT_CLIENT_ID` | No | Default client ID for guest tokens (default: `default`) |
+| `VITE_DEFAULT_DASHBOARD_ID` | Yes | Dashboard embed ID from your Data App |
+| `VITE_DEFAULT_METRIC_ID` | No | Metric embed ID (for the Metric page) |
 
-### Manual Entry (Testing)
-- Manual entry of guest token, client ID, and dashboard ID
-- Use the provided shell scripts to generate test tokens
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   React App     │    │  Node.js API    │    │  DataBrain API  │
-│  (Frontend)     │───▶│   (Backend)     │───▶│   (External)    │
-│                 │    │                 │    │                 │
-│ - Dashboard UI  │    │ - Token Gen     │    │ - Guest Tokens  │
-│ - Config Forms  │    │ - API Calls     │    │ - Dashboards    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-## 🔐 Security Features
-
-- **No Frontend API Tokens**: API tokens never exposed to frontend
-- **Unique Client IDs**: Generated per request
-- **CORS Protection**: Backend properly configured for security
-- **Error Handling**: Comprehensive error handling and logging
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 dbn-demo-react/
 ├── src/
-│   ├── App.tsx          # React app with dual mode support
-│   ├── App.css          # Professional styling
-│   └── main.tsx         # React entry point
+│   ├── App.tsx                 # Router with 6 pages + server event handler
+│   ├── pages/
+│   │   ├── HomePage.tsx        # Feature catalog + MCP setup guide
+│   │   ├── DashboardPage.tsx   # Dashboard embed + options panel + i18n
+│   │   ├── MetricPage.tsx      # <dbn-metric> with size/renderer/variant controls
+│   │   ├── ThemingPage.tsx     # theme JSON, theme-name, chart-colors
+│   │   ├── MultiTenantPage.tsx # Client switcher, dashboard app filters, RLS
+│   │   └── SelfServePage.tsx   # AI pilot, metric creation, embed functions
+│   ├── lib/
+│   │   ├── config.ts           # Reads VITE_* from .env
+│   │   └── use-guest-token.ts  # Shared hook for token fetching
+│   └── components/ui/          # shadcn/ui primitives
 ├── backend/
-│   ├── server.js        # Express server with guest token API
-│   └── package.json     # Backend dependencies
-├── public/
-├── package.json         # Frontend dependencies
-└── README.md           # This file
+│   ├── server.js               # 4 routes: guest-token, dashboards, provision, status
+│   ├── package.json
+│   └── .env.example
+├── .env.example
+├── GUIDES.md                   # MCP cookbook and feature guides
+├── LLM_INSTRUCTIONS.md         # MCP agent playbook
+└── docs/API.md                 # Backend API reference
 ```
 
-## 🛠️ Backend API Endpoints
+## Backend API
 
-### `POST /api/guest-token`
-Generates guest tokens for dashboard access using your DataBrain client ID.
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/config/status` | Health check — shows if API token is configured |
+| `POST` | `/api/guest-token` | Generate a guest token (accepts permissions, params, expiryTime) |
+| `POST` | `/api/dashboards` | List datamarts for the configured data app |
+| `POST` | `/api/provision-dashboard` | Create a per-client dashboard (multi-tenant provisioning) |
 
-**Headers:**
-```
-Content-Type: application/json
-```
+See [`docs/API.md`](docs/API.md) for full request/response schemas.
 
-**Body:**
-```json
-{
-  "clientId": "your-databrain-client-id",
-  "dashboardId": "your-dashboard-id"
-}
-```
+## MCP Setup
 
-**Response:**
-```json
-{
-  "guestToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "clientId": "your-databrain-client-id",
-  "dashboardId": "your-dashboard-id"
-}
-```
+Add the **Databrain MCP server** in your IDE and set the service token. Then use:
 
-## 🧪 Testing with Shell Scripts
+- [`CUSTOMER_EMBED_LOGIC.md`](CUSTOMER_EMBED_LOGIC.md) — Zero-to-embed runbook
+- [`LLM_INSTRUCTIONS.md`](LLM_INSTRUCTIONS.md) — Agent playbook for MCP tool chains
+- [`GUIDES.md`](GUIDES.md) — Feature-by-feature cookbook
 
-For manual entry testing, use the provided scripts:
+## Links
 
-```bash
-# Interactive script
-./generate_guest_token.sh
-
-# Quick command-line script  
-./quick_token.sh YOUR_API_TOKEN YOUR_CLIENT_ID
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-- `DATABRAIN_API_TOKEN`: Your DataBrain API token (required)
-- `PORT`: Backend server port (default: 3001)
-
-### DataBrain Setup
-
-1. Get your API token from DataBrain dashboard
-2. Create a data app in DataBrain
-3. Get your client ID from your DataBrain app configuration
-4. Get your dashboard ID (embed ID)
-5. Configure the `data_app_name` in `backend/server.js`
-
-## 🚨 Troubleshooting
-
-**Backend Issues:**
-- **"API Token: ❌ Not configured"**: Set the `DATABRAIN_API_TOKEN` environment variable
-- **"Failed to connect to backend"**: Make sure backend is running on port 3001
-- **"INVALID_REQUEST_BODY"**: Check that `data_app_name` matches your DataBrain setup
-
-**Frontend Issues:**
-- **"INVALID_TOKEN"**: Token may be expired or invalid
-- **Dashboard not loading**: Check browser console for detailed errors
-
-## 📚 Next Steps
-
-1. **Production Deployment**: 
-   - Add authentication (JWT, OAuth, etc.)
-   - Add database for user management
-   - Implement proper session management
-   - Add HTTPS and security headers
-
-2. **Enhanced Features**:
-   - Token caching for performance
-   - User permission checks
-   - Dashboard access controls
-   - Audit logging
-
-3. **Scale Considerations**:
-   - Rate limiting on token generation
-   - Load balancing for multiple backend instances
-   - Redis for session storage
-   - Database connection pooling
-
-## 🔗 Resources
-
-- [DataBrain Documentation](https://docs.usedatabrain.com)
-- [Official Embedding Guide](https://docs.usedatabrain.com/developer-docs/how-to-embed)
-- [DataBrain Plugin NPM](https://www.npmjs.com/package/@databrainhq/plugin)
-- [React Documentation](https://react.dev)
-- [Express.js Documentation](https://expressjs.com)
-
----
-
-**Note:** This is a demo application. For production use, implement proper authentication, error handling, and security measures according to your requirements. 
+- [Databrain Docs](https://docs.usedatabrain.com)
+- [Production Embedding Guide](https://docs.usedatabrain.com/developer-docs/embedding-setup/step-by-step-guide)
+- [Component Options Reference](https://docs.usedatabrain.com/developer-docs/helpers/component-options-reference)
+- [Guest Token API](https://docs.usedatabrain.com/developer-docs/helpers/api-reference/token)
+- [Databrain App](https://app.usedatabrain.com)

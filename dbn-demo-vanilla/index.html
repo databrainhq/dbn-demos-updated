@@ -2,15 +2,36 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
+    <title>Databrain + Vanilla JS</title>
+    <style>
+      body { margin: 0; font-family: system-ui, sans-serif; }
+      .header { border-bottom: 1px solid #e5e7eb; padding: 12px; display: flex; align-items: center; gap: 12px; background: white; }
+      .header span { font-weight: 600; font-size: 14px; }
+      .header select, .header button { border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 8px; font-size: 13px; cursor: pointer; }
+      #dashboard-container { padding: 8px; min-height: 90vh; }
+      .setup { max-width: 400px; margin: 64px auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px; }
+      .setup h2 { font-size: 18px; font-weight: 600; margin: 0 0 8px; }
+      .setup p { font-size: 14px; color: #666; margin: 0 0 16px; }
+      .setup code { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; }
+      .btn { padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
   </head>
   <body>
-    <script>
-      window.process = { env: {} };
-    </script>
+    <script>window.process = { env: {} };</script>
     <script src="https://unpkg.com/@databrainhq/plugin"></script>
+
+    <div class="header">
+      <span>Databrain + Vanilla JS</span>
+      <select id="theme-select" style="margin-left:auto;">
+        <option value="none">Default theme</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+
+    <div id="app"></div>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

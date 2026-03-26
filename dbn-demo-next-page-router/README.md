@@ -1,29 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Databrain + Next.js (Pages Router) Demo
 
-## Getting Started
+Embed a Databrain dashboard in a Next.js Pages Router project with API route for secure guest token generation.
 
-First, run the development server:
+## Features
+
+- Server-side guest token via `pages/api/guest-token.ts`
+- Dynamic web component import (SSR-safe)
+- `TOKEN_EXPIRED` server event handling
+- Setup/error states with helpful configuration prompts
+
+## Quick Start
 
 ```bash
-npm run dev -- -p 3005
+git clone https://github.com/databrainhq/dbn-demo-next-page-router.git
+cd dbn-demo-next-page-router
+npm run setup    # Installs deps, copies .env.example → .env.local
+# Edit .env.local → set DATABRAIN_API_TOKEN, DATA_APP_NAME, NEXT_PUBLIC_DASHBOARD_ID
+npm run dev      # http://localhost:3000
 ```
 
-Open [http://localhost:3005](http://localhost:3005) with your browser to see the result.
+## Environment Variables (`.env.local`)
 
-## Files to updated
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABRAIN_API_TOKEN` | Yes | Per-data-app API token |
+| `DATA_APP_NAME` | Yes | Data app name in Databrain |
+| `DATABRAIN_API_BASE_URL` | No | API endpoint (default: `https://api.usedatabrain.com`) |
+| `NEXT_PUBLIC_DASHBOARD_ID` | Yes | Dashboard embed ID |
+| `NEXT_PUBLIC_CLIENT_ID` | No | Client ID for guest tokens (default: `default`) |
 
-- [package.json](./package.json)
-	- react: v18
-	- next: v14
-	- @databrainhq/plugin: v:latest
+## How It Works
 
-- [next.config.mjs](./next.config.mjs)
-```javascript
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
+1. `pages/api/guest-token.ts` — API route that calls `POST /api/v2/guest-token/create`
+2. `pages/index.tsx` — Client page that dynamically imports the plugin and renders `<dbn-dashboard>`
 
-export default nextConfig;
-```
+## Links
 
-- [src/pages/index.tsx](./src/pages/index.tsx)
-	- import '@databrainhq/plugin/web' in a `useEffect`
+- [Databrain Docs](https://docs.usedatabrain.com)
+- [Next.js Framework Guide](https://docs.usedatabrain.com/developer-docs/framework-specific-guide)
+- [Guest Token API](https://docs.usedatabrain.com/developer-docs/helpers/api-reference/token)
