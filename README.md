@@ -6,16 +6,16 @@ Official starter templates for embedding [Databrain](https://usedatabrain.com) d
 
 | Template | Framework | What's Included |
 |----------|-----------|-----------------|
-| [dbn-demo-react](./dbn-demo-react) | React + Vite | Full showcase: dashboard, metric cards, theming, multi-tenant, AI chat, self-serve analytics, i18n, embed options |
-| [dbn-demo-next-app-router](./dbn-demo-next-app-router) | Next.js (App Router) | API route for token generation, dashboard embed, theme toggle |
-| [dbn-demo-next-page-router](./dbn-demo-next-page-router) | Next.js (Pages Router) | API route for token generation, dashboard embed |
-| [dbn-demo-angular](./dbn-demo-angular) | Angular 15 | Attribute bindings, embed functions, server event handling |
-| [dbn-demo-vue](./dbn-demo-vue) | Vue 3 + Vite | Reactive theming, self-serve metric creation, composables |
-| [dbn-demo-svelte](./dbn-demo-svelte) | Svelte + Vite | Store-based token management, dashboard embed |
-| [dbn-demo-solid](./dbn-demo-solid) | Solid + Vite | Signal-based reactivity, createResource token fetch |
-| [dbn-demo-vanilla](./dbn-demo-vanilla) | Vanilla JS (CDN) | Zero bundler, script tag setup, theme toggle |
+| [dbn-demo-react](./dbn-demo-react) | React + Vite | Multi-page showcase: dashboard, metric cards, theming, multi-tenant, AI chat, self-serve analytics, i18n, embed options |
+| [dbn-demo-next-app-router](./dbn-demo-next-app-router) | Next.js (App Router) | API route, dashboard, metrics, theming, multi-tenant, i18n, embed options & functions |
+| [dbn-demo-next-page-router](./dbn-demo-next-page-router) | Next.js (Pages Router) | API route, dashboard, metrics, theming, multi-tenant, i18n, embed options & functions |
+| [dbn-demo-angular](./dbn-demo-angular) | Angular 15 | Dashboard, metrics, theming, multi-tenant, i18n, embed options & functions |
+| [dbn-demo-vue](./dbn-demo-vue) | Vue 3 + Vite | Dashboard, metrics, theming, multi-tenant, i18n, embed options & functions |
+| [dbn-demo-svelte](./dbn-demo-svelte) | Svelte + Vite | Dashboard, metrics, theming, multi-tenant, i18n, embed options & functions |
+| [dbn-demo-solid](./dbn-demo-solid) | Solid + Vite | Dashboard, metrics, theming, multi-tenant, i18n, embed options & functions |
+| [dbn-demo-vanilla](./dbn-demo-vanilla) | Vanilla JS (CDN) | Zero bundler, dashboard, metrics, theming, multi-tenant, i18n, embed options & functions |
 
-**Not sure which to pick?** Start with **React** for the most complete example, or choose the template matching your existing stack.
+**Not sure which to pick?** Start with **React** for the most complete multi-page reference app, or choose the template matching your existing stack — all templates include the same core features.
 
 ## Quick Start
 
@@ -42,18 +42,20 @@ Each template's README has the exact env variables and setup steps for that fram
 
 ## Feature Comparison
 
+Every template includes the full Databrain feature set. The React template uses a multi-page layout; all others demonstrate features on a single page with a toolbar.
+
 | Feature | React | Next.js App | Next.js Pages | Angular | Vue | Svelte | Solid | Vanilla |
 |---------|:-----:|:-----------:|:-------------:|:-------:|:---:|:------:|:-----:|:-------:|
 | Dashboard embed | Y | Y | Y | Y | Y | Y | Y | Y |
-| Metric cards | Y | | | | | | | |
-| Theming | Y | Y | | | Y | | | Y |
-| Multi-tenant (RLS) | Y | | | | | | | |
-| Embed options panel | Y | | | Y | | | | |
-| Dashboard filters | Y | | | | | | | |
-| AI Chat / Self-serve | Y | | | | Y | | | |
-| i18n | Y | | | | | | | |
-| Server event handling | Y | | | Y | | | | |
-| Embed functions | Y | | | Y | Y | | | |
+| Metric cards | Y | Y | Y | Y | Y | Y | Y | Y |
+| Theming | Y | Y | Y | Y | Y | Y | Y | Y |
+| Multi-tenant (clientId) | Y | Y | Y | Y | Y | Y | Y | Y |
+| Embed options (CSV, etc.) | Y | Y | Y | Y | Y | Y | Y | Y |
+| i18n (language selector) | Y | Y | Y | Y | Y | Y | Y | Y |
+| Server event handling | Y | Y | Y | Y | Y | Y | Y | Y |
+| Embed functions | Y | Y | Y | Y | Y | Y | Y | Y |
+| Dashboard filters | Y | Y | Y | Y | Y | Y | Y | Y |
+| AI Chat / Self-serve | Y | | | | | | | |
 | Server-side rendering | | Y | Y | | | | | |
 
 ## Documentation

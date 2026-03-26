@@ -6,9 +6,45 @@
     <title>Databrain + Vanilla JS</title>
     <style>
       body { margin: 0; font-family: system-ui, sans-serif; }
-      .header { border-bottom: 1px solid #e5e7eb; padding: 12px; display: flex; align-items: center; gap: 12px; background: white; }
-      .header span { font-weight: 600; font-size: 14px; }
-      .header select, .header button { border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 8px; font-size: 13px; cursor: pointer; }
+      .header {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 10px 12px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        justify-content: space-between;
+        background: white;
+      }
+      .header-brand { font-weight: 600; font-size: 14px; }
+      .header-tools {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        justify-content: flex-end;
+        flex: 1;
+      }
+      .header-tools label.tool {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .header-tools select,
+      .header-tools button,
+      .header-input {
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .header-input { cursor: text; min-width: 6rem; }
+      .header-tools button { background: #fff; }
+      .header-tools button:hover { background: #f9fafb; }
       #dashboard-container { padding: 8px; min-height: 90vh; }
       .setup { max-width: 400px; margin: 64px auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px; }
       .setup h2 { font-size: 18px; font-weight: 600; margin: 0 0 8px; }
@@ -22,12 +58,64 @@
     <script src="https://unpkg.com/@databrainhq/plugin"></script>
 
     <div class="header">
-      <span>Databrain + Vanilla JS</span>
-      <select id="theme-select" style="margin-left:auto;">
-        <option value="none">Default theme</option>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
+      <span class="header-brand">Databrain + Vanilla JS</span>
+      <div class="header-tools">
+        <label class="tool">
+          <input type="checkbox" id="opt-enable-download-csv" />
+          Download CSV
+        </label>
+        <label class="tool">
+          <input type="checkbox" id="opt-enable-email-csv" />
+          Email CSV
+        </label>
+        <label class="tool">
+          <input type="checkbox" id="opt-disable-fullscreen" />
+          Disable fullscreen
+        </label>
+        <label class="tool">
+          Language
+          <select id="language-select" aria-label="Language">
+            <option value="">Default (en)</option>
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="es">Spanish</option>
+          </select>
+        </label>
+        <label class="tool">
+          Client ID
+          <input type="text" id="client-id-input" class="header-input" value="default" autocomplete="off" />
+        </label>
+        <input type="text" id="filter-field-input" class="header-input" placeholder="Filter field" autocomplete="off" />
+        <input type="text" id="filter-value-input" class="header-input" placeholder="Filter value" autocomplete="off" />
+        <button type="button" id="switch-client-btn">Switch client</button>
+        <button type="button" id="btn-create-metric">Create Metric</button>
+        <button type="button" id="btn-manage-metrics">Manage Metrics</button>
+        <label class="tool">
+          Admin Theme
+          <select id="theme-select" aria-label="Admin Theme">
+            <option value="">None (default)</option>
+            <option value="Clean Light">Clean Light</option>
+            <option value="Dark Mode">Dark Mode</option>
+            <option value="Corporate Blue">Corporate Blue</option>
+            <option value="Warm Brand">Warm Brand</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div style="padding:8px 12px;border-bottom:1px solid #e5e7eb;background:#fff;">
+      <details>
+        <summary style="font-size:12px;color:#64748b;cursor:pointer;user-select:none;">
+          Admin Theme JSON <span id="admin-theme-error" style="color:#dc2626;margin-left:8px;"></span>
+        </summary>
+        <textarea
+          id="admin-theme-json"
+          style="margin-top:8px;width:100%;height:140px;font-family:monospace;font-size:12px;border:1px solid #d1d5db;border-radius:6px;padding:8px;background:#f9fafb;resize:vertical;box-sizing:border-box;"
+          placeholder="Paste or edit adminThemeOptions JSON here.&#10;Select a preset above to start from an example."
+          spellcheck="false"
+        ></textarea>
+      </details>
     </div>
 
     <div id="app"></div>
