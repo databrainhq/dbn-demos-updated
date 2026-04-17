@@ -83,7 +83,7 @@ generate_guest_token(clientId: "user-123", dataAppName: "my-app")
 ### MCP tool chain
 
 ```
-configure_embed_options(embedId: "...", ...)
+update_embed(embedId: "...", body: { options: { ... } })
 ```
 
 ---
@@ -258,7 +258,7 @@ embed?.onClickCustomizeLayout();
 ### MCP tool chain
 
 ```
-configure_embed_options(embedId: "...", isAllowMetricCreation: true, metricCreationMode: "CHAT")
+update_embed(embedId: "...", body: { options: { isAllowMetricCreation: true, metricCreationMode: "CHAT" } })
 generate_guest_token(..., params: { userIdentifier: "..." })
 ```
 
@@ -318,4 +318,4 @@ Full zero-to-embed flow using MCP tools:
 8. `generate_guest_token` — generate frontend auth token
 9. `generate_embed_code` — get framework-specific code snippets
 
-Or use the interactive orchestrator: `setup_embed_interactive(step: "discover_data_apps")`.
+The assistant orchestrates these steps automatically based on your request.

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const features = [
   {
     title: "Dashboard Embed",
-    description: "Embed a full dashboard with configurable options, CSV export, fullscreen, and more.",
+    description: "Embed a full dashboard with configurable options, CSV export, fullscreen, chart-click callbacks, and custom-chart-settings locks.",
     hash: "#dashboard",
   },
   {
