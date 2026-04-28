@@ -1,0 +1,45 @@
+{
+  "name": "angular-tutorial-scratch",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Companion starter for the 'Angular Dashboard: The Complete 2026 Guide' tutorial — Angular 19 + Material + ng2-charts + Signals + @ngrx/signals.",
+  "scripts": {
+    "start": "concurrently -n web,api -c blue,green \"npm:dev:web\" \"npm:dev:api\"",
+    "dev:web": "ng serve --proxy-config proxy.conf.json",
+    "dev:api": "node mock-api.mjs",
+    "build": "ng build",
+    "build:ssr": "ng build --configuration=production && ng run angular-tutorial-scratch:server",
+    "watch": "ng build --watch --configuration development",
+    "lint": "ng lint",
+    "test": "ng test --watch=false --browsers=ChromeHeadless",
+    "analyze": "ng build --configuration=production --stats-json && npx source-map-explorer dist/angular-tutorial-scratch/browser/*.js"
+  },
+  "dependencies": {
+    "@angular/animations": "^19.2.0",
+    "@angular/cdk": "^19.2.0",
+    "@angular/common": "^19.2.0",
+    "@angular/compiler": "^19.2.0",
+    "@angular/core": "^19.2.0",
+    "@angular/forms": "^19.2.0",
+    "@angular/material": "^19.2.0",
+    "@angular/platform-browser": "^19.2.0",
+    "@angular/platform-browser-dynamic": "^19.2.0",
+    "@angular/router": "^19.2.0",
+    "@ngrx/signals": "^19.0.0",
+    "chart.js": "^4.4.7",
+    "ng2-charts": "^7.0.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.8.1",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^19.2.0",
+    "@angular/cli": "^19.2.0",
+    "@angular/compiler-cli": "^19.2.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.1",
+    "concurrently": "^9.1.0",
+    "express": "^5.0.0",
+    "typescript": "~5.6.0"
+  }
+}
