@@ -8,18 +8,18 @@ This is the finished Streamlit dashboard the tutorial builds, wired into a runna
 
 ## Stack
 
-- **Streamlit 1.40** (the dashboard runtime — chosen as the primary 2026 default per the article)
-- **Pandas 2.2** (data loading and aggregation)
-- **Plotly 5.24** (interactive charts — `px.line` and `px.bar`)
-- **Faker 30** (realistic 50k-row sample dataset, replaces the 3-row toy data the original article shipped with)
-- **Python 3.12** (matches Streamlit Community Cloud default)
+- **Streamlit ≥ 1.55** (the dashboard runtime — chosen as the primary 2026 default per the article; Streamlit ships every two weeks under Snowflake)
+- **Pandas ≥ 2.2** (data loading and aggregation; pandas 3.0 makes copy-on-write the default)
+- **Plotly ≥ 6** (interactive charts — `px.line` and `px.bar`; v6 is the current major)
+- **Faker ≥ 30** (realistic 50k-row sample dataset, replaces the 3-row toy data the original article shipped with)
+- **Python 3.13** (current stable; Streamlit's hard floor is 3.10, Streamlit Community Cloud also runs on 3.13)
 
 A Dash 3.x port lives in the Dash walkthrough section of the article inline; if/when there's enough demand, a `dash-app/` sibling folder can be added here.
 
 ## Quick start
 
 ```bash
-python3.12 -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python data/generate_data.py        # one-time, generates 50k-row CSV (~4.3MB)
@@ -44,7 +44,7 @@ Move any filter and the whole dashboard updates — Streamlit reruns the script 
 python-tutorial-scratch/
 ├── streamlit_app.py            # The full app (sidebar, KPIs, charts, table)
 ├── requirements.txt            # Pinned dependencies
-├── .python-version             # Pins to Python 3.12
+├── .python-version             # Pins to Python 3.13
 ├── .streamlit/
 │   └── config.toml             # Theme tokens (primary color, font)
 ├── data/
